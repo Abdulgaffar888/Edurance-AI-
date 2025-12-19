@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'dart:html' as html;
+import 'package:flutter_tts/flutter_tts.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 class ViewerScreen extends StatefulWidget {
   final Map data;
@@ -12,122 +13,257 @@ class ViewerScreen extends StatefulWidget {
 }
 
 class _ViewerScreenState extends State<ViewerScreen> {
+  FlutterTts? _flutterTts;
+  stt.SpeechToText? _speech;
+
   bool _speaking = false;
-  String _doubtText = "";
+  bool _listening = false;
+  bool _ttsInitialized = false;
+
+  final TextEditingController _doubtController = TextEditingController();
   String? _doubtAnswer;
 
-  html.SpeechSynthesisUtterance? _utterance;
+  double _speechRate = 0.45;
+
+  int _currentCardIndex = 0;
+  List<dynamic> _flashcards = [];
+
+  @override
+  void initState() {
+    super.initState();
+
+    if (widget.data['flashcards'] != null) {
+      _flashcards = List.from(widget.data['flashcards']);
+    }
+
+    _initTts();
+    _initSpeech();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _autoPlay());
+  }
+
+  Future<void> _initTts() async {
+    _flutterTts = FlutterTts();
+    await _flutterTts!.setLanguage("en-US");
+    await _flutterTts!.setPitch(1.15);
+    await _flutterTts!.setSpeechRate(_speechRate);
+    await _flutterTts!.setVolume(1.0);
+
+    _flutterTts!.setCompletionHandler(() {
+      setState(() => _speaking = false);
+    });
+
+    setState(() => _ttsInitialized = true);
+  }
+
+  Future<void> _initSpeech() async {
+    _speech = stt.SpeechToText();
+    await _speech!.initialize(
+      onStatus: (s) => setState(() => _listening = s == 'listening'),
+      onError: (_) => setState(() => _listening = false),
+    );
+  }
+
+  void _autoPlay() {
+    if (_flashcards.isNotEmpty) _readCard();
+  }
+
+  Future<void> _readCard() async {
+    if (!_ttsInitialized) return;
+    final card = _flashcards[_currentCardIndex];
+    final text = "${card['hook']} ${card['content']}";
+    setState(() => _speaking = true);
+    await _flutterTts!.speak(text);
+  }
 
   void _toggleSpeak() {
-    final synth = html.window.speechSynthesis;
-    if (synth == null) return;
-
     if (_speaking) {
-      synth.cancel();
+      _flutterTts!.stop();
       setState(() => _speaking = false);
+    } else {
+      _readCard();
+    }
+  }
+
+  void _startListening() async {
+    if (_listening) {
+      _speech!.stop();
       return;
     }
 
-    final fullText = widget.data['sections']
-        .map((s) => "${s['heading']}. ${s['content']}")
-        .join(". ");
-
-    _utterance = html.SpeechSynthesisUtterance(fullText)
-      ..rate = 0.95
-      ..pitch = 1.1;
-
-    synth.speak(_utterance!);
-    setState(() => _speaking = true);
+    await _speech!.listen(onResult: (r) {
+      setState(() => _doubtController.text = r.recognizedWords);
+    });
   }
 
   Future<void> _sendDoubt(String text) async {
+    if (text.trim().isEmpty) return;
+
     final res = await http.post(
       Uri.parse("http://localhost:3000/api/doubt"),
       headers: {"Content-Type": "application/json"},
       body: jsonEncode({
         "topic": widget.data['title'],
-        "grade": widget.data['grade'],
+        "grade": widget.data['grade'] ?? 8,
         "doubt": text,
       }),
     );
 
-    final data = jsonDecode(res.body);
-    setState(() => _doubtAnswer = data['answer']);
+    if (res.statusCode == 200) {
+      setState(() => _doubtAnswer = jsonDecode(res.body)['answer']);
+    }
+  }
+
+  MaterialColor _gradeColor() {
+    final g = widget.data['grade'] ?? 8;
+    if (g <= 6) return Colors.blue;
+    if (g <= 9) return Colors.indigo;
+    return Colors.purple;
   }
 
   @override
   Widget build(BuildContext context) {
+    final color = _gradeColor();
+    final card = _flashcards[_currentCardIndex];
+
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.data['title']),
-        backgroundColor: Colors.indigo,
+        backgroundColor: color,
         actions: [
           IconButton(
-            icon: Icon(_speaking ? Icons.stop : Icons.volume_up),
+            icon: Icon(_speaking ? Icons.stop : Icons.play_arrow),
             onPressed: _toggleSpeak,
-          )
+          ),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          for (var section in widget.data['sections'])
-            Card(
-              elevation: 3,
-              margin: const EdgeInsets.only(bottom: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(14),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      section['heading'],
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.indigo,
-                      ),
+
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // FLASHCARD
+              Card(
+                elevation: 8,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: Container(
+                  padding: const EdgeInsets.all(32),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [color.shade50, color.shade100],
                     ),
-                    const SizedBox(height: 8),
-                    Text(section['content']),
-                  ],
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        card['emoji'],
+                        style: const TextStyle(fontSize: 64),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        card['title'],
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                          color: color.shade900,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 16),
+                      // Constrained scrollable content area
+                      ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxHeight: MediaQuery.of(context).size.height * 0.4,
+                        ),
+                        child: SingleChildScrollView(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Text(
+                                card['hook'],
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontStyle: FontStyle.italic,
+                                  color: color.shade700,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                card['content'],
+                                style: const TextStyle(fontSize: 18, height: 1.6),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
 
-          const SizedBox(height: 20),
-          const Text(
-            "Ask a doubt (voice/text)",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 8),
-          TextField(
-            onChanged: (v) => _doubtText = v,
-            decoration: const InputDecoration(
-              hintText: "Speak or type your doubt...",
-              border: OutlineInputBorder(),
-            ),
-          ),
-          const SizedBox(height: 8),
-          ElevatedButton(
-            onPressed: () => _sendDoubt(_doubtText),
-            child: const Text("Ask Doubt"),
-          ),
+              const SizedBox(height: 20),
 
-          if (_doubtAnswer != null) ...[
-            const SizedBox(height: 16),
-            Card(
-              color: Colors.indigo.shade50,
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Text(_doubtAnswer!),
+              // NAVIGATION
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  ElevatedButton(
+                    onPressed: _currentCardIndex > 0
+                        ? () => setState(() => _currentCardIndex--)
+                        : null,
+                    child: const Text("Previous"),
+                  ),
+                  ElevatedButton(
+                    onPressed: _currentCardIndex < _flashcards.length - 1
+                        ? () => setState(() => _currentCardIndex++)
+                        : null,
+                    child: const Text("Next"),
+                  ),
+                ],
               ),
-            )
-          ]
-        ],
+
+              const SizedBox(height: 20),
+
+              // DOUBT
+              TextField(
+                controller: _doubtController,
+                onChanged: (_) => setState(() {}),
+                decoration: InputDecoration(
+                  hintText: "Ask a doubt...",
+                  suffixIcon: IconButton(
+                    icon: Icon(_listening ? Icons.mic : Icons.mic_none),
+                    onPressed: _startListening,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              ElevatedButton(
+                onPressed: _doubtController.text.trim().isEmpty
+                    ? null
+                    : () => _sendDoubt(_doubtController.text),
+                child: const Text("Ask Doubt"),
+              ),
+
+              if (_doubtAnswer != null) ...[
+                const SizedBox(height: 20),
+                Text(
+                  _doubtAnswer!,
+                  style: const TextStyle(fontSize: 16, height: 1.6),
+                ),
+              ],
+            ],
+          ),
+        ),
       ),
     );
   }
