@@ -31,9 +31,7 @@ class _ViewerScreenState extends State<ViewerScreen> {
   @override
   void initState() {
     super.initState();
-    if (widget.data['flashcards'] != null) {
-      _flashcards = List.from(widget.data['flashcards']);
-    }
+    _flashcards = List.from(widget.data['flashcards'] ?? []);
     _initTts();
     _initSpeech();
     WidgetsBinding.instance.addPostFrameCallback((_) => _autoPlay());
@@ -92,8 +90,9 @@ class _ViewerScreenState extends State<ViewerScreen> {
 
   Future<void> _sendDoubt(String text) async {
     if (text.trim().isEmpty) return;
+
     final res = await http.post(
-      Uri.parse("http://localhost:3000/api/doubt"),
+      Uri.parse("https://edurance-backend.onrender.com/api/doubt"),
       headers: {"Content-Type": "application/json"},
       body: jsonEncode({
         "topic": widget.data['title'],
@@ -101,6 +100,7 @@ class _ViewerScreenState extends State<ViewerScreen> {
         "doubt": text,
       }),
     );
+
     if (res.statusCode == 200) {
       setState(() => _doubtAnswer = jsonDecode(res.body)['answer']);
     }
@@ -119,6 +119,7 @@ class _ViewerScreenState extends State<ViewerScreen> {
     final card = _flashcards[_currentCardIndex];
 
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         title: Text(widget.data['title']),
         backgroundColor: color,
@@ -129,25 +130,23 @@ class _ViewerScreenState extends State<ViewerScreen> {
           ),
         ],
       ),
-
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final maxH = constraints.maxHeight;
-
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              mainAxisSize: MainAxisSize.min,
-        children: [
-                Flexible(
-                  flex: 5,
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Card(
+            return SingleChildScrollView(
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              padding: const EdgeInsets.all(12),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // FLASHCARD
+                    Card(
                       elevation: 8,
-              shape: RoundedRectangleBorder(
+                      shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(24),
-              ),
+                      ),
                       child: Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
@@ -156,51 +155,44 @@ class _ViewerScreenState extends State<ViewerScreen> {
                           ),
                           borderRadius: BorderRadius.circular(24),
                         ),
-                child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          mainAxisSize: MainAxisSize.min,
-                  children: [
-                            Flexible(
-                              flex: 0,
-                              child: Text(
-                                card['emoji'],
-                                style: const TextStyle(fontSize: 48),
-                                textAlign: TextAlign.center,
-                              ),
+                        child: Column(
+                          children: [
+                            Text(
+                              card['emoji'],
+                              style: const TextStyle(fontSize: 48),
+                              textAlign: TextAlign.center,
                             ),
                             const SizedBox(height: 8),
-                            Flexible(
-                              flex: 0,
-                              child: Text(
-                                card['title'],
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                  color: color.shade900,
-                                ),
+                            Text(
+                              card['title'],
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: color.shade900,
                               ),
                             ),
                             const SizedBox(height: 6),
-                            Flexible(
-                              flex: 0,
-                              child: Text(
-                                card['hook'],
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontStyle: FontStyle.italic,
-                                  color: color.shade700,
-                                ),
+                            Text(
+                              card['hook'],
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontStyle: FontStyle.italic,
+                                color: color.shade700,
                               ),
                             ),
-                            const SizedBox(height: 8),
-                            Flexible(
+                            const SizedBox(height: 10),
+                            ConstrainedBox(
+                              constraints: BoxConstraints(
+                                maxHeight:
+                                    MediaQuery.of(context).size.height * 0.45,
+                              ),
                               child: SingleChildScrollView(
                                 child: Text(
                                   card['content'],
                                   textAlign: TextAlign.center,
-                      style: const TextStyle(
+                                  style: const TextStyle(
                                     fontSize: 15,
                                     height: 1.5,
                                   ),
@@ -211,74 +203,76 @@ class _ViewerScreenState extends State<ViewerScreen> {
                         ),
                       ),
                     ),
-                  ),
-                ),
-                Flexible(
-                  flex: 5,
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      mainAxisSize: MainAxisSize.min,
+
+                    const SizedBox(height: 14),
+
+                    // NAVIGATION
+                    Row(
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Flexible(
-                              child: ElevatedButton(
-                                onPressed: _currentCardIndex > 0
-                                    ? () => setState(() => _currentCardIndex--)
-                                    : null,
-                                child: const Text("Previous"),
-              ),
-            ),
-                            const SizedBox(width: 8),
-                            Flexible(
-                              child: ElevatedButton(
-                                onPressed: _currentCardIndex < _flashcards.length - 1
-                                    ? () => setState(() => _currentCardIndex++)
-                                    : null,
-                                child: const Text("Next"),
-                              ),
-                            ),
-                          ],
-          ),
-                        const SizedBox(height: 12),
-          TextField(
-                          controller: _doubtController,
-                          onChanged: (_) => setState(() {}),
-                          maxLines: 3,
-                          decoration: InputDecoration(
-                            hintText: "Ask a doubt...",
-                            suffixIcon: IconButton(
-                              icon: Icon(_listening ? Icons.mic : Icons.mic_none),
-                              onPressed: _startListening,
-                            ),
-            ),
-          ),
-                        const SizedBox(height: 10),
-          ElevatedButton(
-                          onPressed: _doubtController.text.trim().isEmpty
-                              ? null
-                              : () => _sendDoubt(_doubtController.text),
-            child: const Text("Ask Doubt"),
-          ),
-          if (_doubtAnswer != null) ...[
-                          const SizedBox(height: 12),
-                          Text(
-                            _doubtAnswer!,
-                            style: const TextStyle(
-                              fontSize: 15,
-                              height: 1.5,
-                            ),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: _currentCardIndex > 0
+                                ? () => setState(() => _currentCardIndex--)
+                                : null,
+                            child: const Text("Previous"),
                           ),
-                        ],
-            const SizedBox(height: 16),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed:
+                                _currentCardIndex < _flashcards.length - 1
+                                    ? () =>
+                                        setState(() => _currentCardIndex++)
+                                    : null,
+                            child: const Text("Next"),
+                          ),
+                        ),
                       ],
                     ),
-              ),
+
+                    const SizedBox(height: 16),
+
+                    // DOUBT
+                    TextField(
+                      controller: _doubtController,
+                      onChanged: (_) => setState(() {}),
+                      maxLines: 3,
+                      decoration: InputDecoration(
+                        hintText: "Ask a doubt...",
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        suffixIcon: IconButton(
+                          icon:
+                              Icon(_listening ? Icons.mic : Icons.mic_none),
+                          onPressed: _startListening,
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 10),
+
+                    ElevatedButton(
+                      onPressed: _doubtController.text.trim().isEmpty
+                          ? null
+                          : () => _sendDoubt(_doubtController.text),
+                      child: const Text("Ask Doubt"),
+                    ),
+
+                    if (_doubtAnswer != null) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        _doubtAnswer!,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          height: 1.5,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
-        ],
+              ),
             );
           },
         ),

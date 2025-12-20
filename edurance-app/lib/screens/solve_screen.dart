@@ -31,7 +31,7 @@ class _SolveScreenState extends State<SolveScreen> {
 
     try {
       final res = await http.post(
-        Uri.parse("http://localhost:3000/api/solve"),
+        Uri.parse("https://edurance-backend.onrender.com/api/solve"),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "question": question,

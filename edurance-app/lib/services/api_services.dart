@@ -3,7 +3,7 @@ import 'dart:convert';
 
 
 class ApiService {
-static const base = 'http://localhost:3000';
+static const base = 'https://edurance-backend.onrender.com/';
 
 
 static Future<dynamic> generate(String topic, int grade) async {

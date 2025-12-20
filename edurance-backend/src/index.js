@@ -28,49 +28,77 @@ app.post("/api/learn", async (req, res) => {
   }
 
   try {
-    let contentLines;
-    let contentStyle;
-    let examOrientation = "";
+    let linesPerCard;
+    let languageRule;
+    let examRule = "";
 
     if (grade === 4) {
-      contentLines = "6-7 lines";
-      contentStyle = "short sentences, daily examples, simple explanations";
+      linesPerCard = "6–7 complete lines";
+      languageRule = "very simple sentences, daily life examples, no jargon";
     } else if (grade === 5) {
-      contentLines = "7-8 lines";
-      contentStyle = "clear explanations, daily examples, structured content";
+      linesPerCard = "7–8 complete lines";
+      languageRule = "simple explanations, clear structure, daily examples";
     } else if (grade === 6) {
-      contentLines = "8-9 lines";
-      contentStyle = "clear definitions, structured explanations, key terms";
+      linesPerCard = "8–9 complete lines";
+      languageRule = "clear definitions, structured explanation, key terms";
     } else if (grade === 7) {
-      contentLines = "9-10 lines";
-      contentStyle = "how/why explanations, cause-effect relationships, examples";
+      linesPerCard = "9–10 complete lines";
+      languageRule = "how and why explanations, cause-effect relationships";
     } else if (grade <= 9) {
-      contentLines = "10-12 lines";
-      contentStyle = "comprehensive how/why explanations, detailed examples";
+      linesPerCard = "10–12 complete lines";
+      languageRule = "detailed explanations, examples, reasoning";
     } else if (grade === 10) {
-      contentLines = "12-14 lines";
-      contentStyle = "mechanisms, processes, keywords, exam-relevant details";
-      examOrientation = "Focus on exam-relevant mechanisms and precise terminology.";
+      linesPerCard = "12–14 complete lines";
+      languageRule = "exam-oriented, mechanisms, processes, precise terms";
+      examRule = "Write answers suitable for board exam preparation.";
     } else {
-      contentLines = "14-16 lines";
-      contentStyle = "exam-oriented, precise terminology, formulas, detailed analysis";
-      examOrientation = "Exam-ready depth with formal reasoning and precise definitions.";
+      linesPerCard = "14–16 complete lines";
+      languageRule = "exam-ready depth, formal reasoning, precise terminology";
+      examRule = "Answers must be sufficient for full exam marks.";
     }
 
     const prompt = `
-You are a teacher creating a flashcard-style lesson about "${topic}" for Grade ${grade}.
+You are a STRICT school teacher preparing EXAM-READY flashcards.
 
-Create 5–7 flashcards. Each flashcard must include:
-- emoji
-- title (3–6 words)
-- hook (1 engaging sentence)
-- content: EXACTLY ${contentLines}. ${contentStyle}
-${examOrientation}
+Topic: "${topic}"
+Grade: ${grade}
 
-Return ONLY valid JSON:
+CREATE EXACTLY 5 FLASHCARDS.
+
+⚠️ CRITICAL RULE (VERY IMPORTANT):
+- EVERY flashcard must have THE SAME DEPTH AND DETAIL.
+- Do NOT make the first flashcard longer than others.
+- If ONE flashcard is shallow, the answer is INVALID.
+
+Each flashcard MUST contain:
+- emoji: exactly ONE relevant emoji
+- title: 3–6 words
+- hook: exactly ONE engaging sentence
+- content: EXACTLY ${linesPerCard}
+
+Content rules for EVERY flashcard:
+- ${languageRule}
+- Each line must be a FULL sentence.
+- No summaries.
+- Each flashcard represents ONE exam-relevant concept.
+${examRule}
+
+ABSOLUTE RULES:
+- Depth must be CONSISTENT across ALL flashcards.
+- Do NOT reduce detail in later flashcards.
+- Do NOT use markdown.
+- Do NOT use LaTeX or symbols.
+- Output ONLY valid JSON.
+
+Return ONLY this format:
 {
   "flashcards": [
-    { "emoji": "📘", "title": "...", "hook": "...", "content": "..." }
+    {
+      "emoji": "📘",
+      "title": "Concept title",
+      "hook": "Engaging opening sentence.",
+      "content": "Line 1. Line 2. Line 3. Line 4. Line 5. Line 6."
+    }
   ]
 }
 `;
@@ -78,10 +106,16 @@ Return ONLY valid JSON:
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
-        { role: "system", content: "Return valid JSON only." },
-        { role: "user", content: prompt }
+        {
+          role: "system",
+          content: "You are a strict teacher. Reject shallow answers. Return JSON only."
+        },
+        {
+          role: "user",
+          content: prompt
+        }
       ],
-      temperature: 0.6,
+      temperature: 0.4,
       response_format: { type: "json_object" }
     });
 
@@ -94,10 +128,11 @@ Return ONLY valid JSON:
     });
 
   } catch (e) {
-    console.error(e);
+    console.error("Learn failed:", e);
     res.status(500).json({ error: "Learn failed" });
   }
 });
+
 
 /* =========================
    DOUBT

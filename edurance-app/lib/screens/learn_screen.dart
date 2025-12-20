@@ -26,7 +26,7 @@ class _LearnScreenState extends State<LearnScreen> {
 
     try {
     final res = await http.post(
-      Uri.parse("http://localhost:3000/api/learn"),
+      Uri.parse("https://edurance-backend.onrender.com/api/learn"),
       headers: {"Content-Type": "application/json"},
       body: jsonEncode({
         "topic": topic,
