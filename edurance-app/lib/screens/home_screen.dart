@@ -5,9 +5,9 @@ import 'solve_screen.dart';
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+@override
+Widget build(BuildContext context) {
+return Scaffold(
       appBar: AppBar(
         title: const Text('Edurance AI'),
         backgroundColor: Colors.indigo,
@@ -18,9 +18,9 @@ class HomeScreen extends StatelessWidget {
         child: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
+child: Column(
+mainAxisAlignment: MainAxisAlignment.center,
+children: [
                 _HomeCardWrapper(
                   child: _HomeCard(
                     icon: Icons.school,
@@ -48,13 +48,13 @@ class HomeScreen extends StatelessWidget {
                     },
                   ),
                 ),
-              ],
-            ),
-          ),
+],
+),
+),
         ),
       ),
-    );
-  }
+);
+}
 }
 
 /// Wrapper that GUARANTEES equal card height on all screens
@@ -67,7 +67,7 @@ class _HomeCardWrapper extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: double.infinity,
-      height: 200, // 🔑 Fixed height = equal cards
+      height: 210, // Fixed height = equal cards (increased to prevent overflow)
       child: child,
     );
   }
@@ -97,32 +97,35 @@ class _HomeCard extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(20),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center, // 🔑 center content
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
                 icon,
-                size: 60,
+                size: 56,
                 color: Colors.indigo[700],
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 12),
               Text(
                 title,
                 style: TextStyle(
-                  fontSize: 22,
+                  fontSize: 20,
                   fontWeight: FontWeight.bold,
                   color: Colors.indigo[700],
                 ),
               ),
-              const SizedBox(height: 8),
-              Text(
-                description,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14,
-                  height: 1.4,
-                  color: Colors.grey[600],
+              const SizedBox(height: 6),
+              Flexible(
+                child: Text(
+                  description,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 13,
+                    height: 1.3,
+                    color: Colors.grey[600],
+                  ),
                 ),
               ),
             ],

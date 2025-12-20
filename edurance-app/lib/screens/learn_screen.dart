@@ -25,16 +25,16 @@ class _LearnScreenState extends State<LearnScreen> {
     setState(() => _loading = true);
 
     try {
-      final res = await http.post(
-        Uri.parse("http://localhost:3000/api/learn"),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "topic": topic,
-          "grade": _grade,
-        }),
-      );
+    final res = await http.post(
+      Uri.parse("http://localhost:3000/api/learn"),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({
+        "topic": topic,
+        "grade": _grade,
+      }),
+    );
 
-      setState(() => _loading = false);
+    setState(() => _loading = false);
 
       if (res.statusCode != 200) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -43,17 +43,17 @@ class _LearnScreenState extends State<LearnScreen> {
         return;
       }
 
-      final data = jsonDecode(res.body);
+    final data = jsonDecode(res.body);
 
       // Ensure grade is included in data
       data['grade'] = _grade;
-      
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => ViewerScreen(data: data),
-        ),
-      );
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ViewerScreen(data: data),
+      ),
+    );
     } catch (e) {
       setState(() => _loading = false);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -70,112 +70,118 @@ class _LearnScreenState extends State<LearnScreen> {
         backgroundColor: Colors.indigo,
         foregroundColor: Colors.white,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Card(
+                elevation: 4,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
           children: [
-            Card(
-              elevation: 4,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.school, color: Colors.indigo[700], size: 32),
-                        const SizedBox(width: 12),
-                        Text(
-                          "What do you want to learn?",
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.indigo[700],
+                          Icon(Icons.school, color: Colors.indigo[700], size: 32),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              "What do you want to learn?",
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.indigo[700],
+                              ),
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-                    TextField(
-                      controller: _topicController,
-                      decoration: InputDecoration(
-                        labelText: "Enter topic",
-                        hintText: "e.g., Photosynthesis, Algebra, World War 2",
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        filled: true,
-                        fillColor: Colors.grey[50],
-                        prefixIcon: const Icon(Icons.search),
+                        ],
                       ),
-                      textInputAction: TextInputAction.done,
-                      onSubmitted: (_) => _generate(),
-                    ),
-                    const SizedBox(height: 20),
-                    Text(
-                      "Select Grade Level",
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.grey[700],
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey[300]!),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: DropdownButton<int>(
-                        value: _grade,
-                        isExpanded: true,
-                        underline: const SizedBox(),
-                        items: List.generate(
-                          9,
-                          (i) => DropdownMenuItem(
-                            value: i + 4,
-                            child: Text("Grade ${i + 4}"),
-                          ),
-                        ),
-                        onChanged: (v) => setState(() => _grade = v!),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: ElevatedButton.icon(
-                        onPressed: _loading ? null : _generate,
-                        icon: _loading
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                ),
-                              )
-                            : const Icon(Icons.auto_awesome),
-                        label: Text(_loading ? "Generating..." : "Generate Lesson"),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.indigo,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
+                      const SizedBox(height: 24),
+            TextField(
+              controller: _topicController,
+                        decoration: InputDecoration(
+                          labelText: "Enter topic",
+                          hintText: "e.g., Photosynthesis, Algebra, World War 2",
+                          border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
+                          filled: true,
+                          fillColor: Colors.grey[50],
+                          prefixIcon: const Icon(Icons.search),
                         ),
+                        textInputAction: TextInputAction.done,
+                        onSubmitted: (_) => _generate(),
                       ),
-                    ),
-                  ],
-                ),
+                      const SizedBox(height: 20),
+                      Text(
+                        "Select Grade Level",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey[700],
               ),
             ),
+            const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey[300]!),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: DropdownButton<int>(
+              value: _grade,
+                          isExpanded: true,
+                          underline: const SizedBox(),
+              items: List.generate(
+                9,
+                (i) => DropdownMenuItem(
+                  value: i + 4,
+                  child: Text("Grade ${i + 4}"),
+                ),
+              ),
+              onChanged: (v) => setState(() => _grade = v!),
+            ),
+                      ),
+                      const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+                        height: 50,
+                        child: ElevatedButton.icon(
+                onPressed: _loading ? null : _generate,
+                          icon: _loading
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              ),
+                                )
+                              : const Icon(Icons.auto_awesome),
+                          label: Text(_loading ? "Generating..." : "Generate Lesson"),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.indigo,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
           ],
+          ),
         ),
       ),
     );
