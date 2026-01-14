@@ -1,135 +1,140 @@
 import 'package:flutter/material.dart';
-import 'learn_screen.dart';
-import 'solve_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
-@override
-Widget build(BuildContext context) {
-return Scaffold(
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
       appBar: AppBar(
-        title: const Text('Edurance AI'),
+        title: const Text('Edurance AI Explorer', 
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         backgroundColor: Colors.indigo,
-        foregroundColor: Colors.white,
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout, color: Colors.white),
+            tooltip: 'Logout',
+            onPressed: () async {
+              await FirebaseAuth.instance.signOut();
+              if (context.mounted) {
+                Navigator.pushReplacementNamed(context, '/auth');
+              }
+            },
+          )
+        ],
       ),
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-child: Column(
-mainAxisAlignment: MainAxisAlignment.center,
-children: [
-                _HomeCardWrapper(
-                  child: _HomeCard(
-                    icon: Icons.school,
-                    title: 'Learn',
-                    description: 'AI-powered lessons tailored to your grade',
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => LearnScreen()),
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(height: 24),
-                _HomeCardWrapper(
-                  child: _HomeCard(
-                    icon: Icons.camera_alt,
-                    title: 'Solve',
-                    description: 'Solve problems with AI assistance',
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => SolveScreen()),
-                      );
-                    },
-                  ),
-                ),
-],
-),
-),
-        ),
-      ),
-);
-}
-}
-
-/// Wrapper that GUARANTEES equal card height on all screens
-class _HomeCardWrapper extends StatelessWidget {
-  final Widget child;
-
-  const _HomeCardWrapper({required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      height: 210, // Fixed height = equal cards (increased to prevent overflow)
-      child: child,
-    );
-  }
-}
-
-class _HomeCard extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String description;
-  final VoidCallback onTap;
-
-  const _HomeCard({
-    required this.icon,
-    required this.title,
-    required this.description,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      elevation: 6,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                icon,
-                size: 56,
-                color: Colors.indigo[700],
-              ),
-              const SizedBox(height: 12),
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.indigo[700],
-                ),
-              ),
-              const SizedBox(height: 6),
-              Flexible(
-                child: Text(
-                  description,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 13,
-                    height: 1.3,
-                    color: Colors.grey[600],
-                  ),
-                ),
-              ),
-            ],
+      body: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          // Fixed: Changed 'getGradient' to the standard 'gradient' parameter
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Colors.indigo.shade50, Colors.white],
           ),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Module Icon with a "Glow" effect
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.amber.withOpacity(0.4),
+                    blurRadius: 20,
+                    spreadRadius: 5,
+                  ),
+                ],
+              ),
+              child: const Icon(Icons.bolt, size: 80, color: Colors.amber),
+            ),
+            
+            const SizedBox(height: 30),
+            
+            const Text(
+              "Physics: Grade 6",
+              style: TextStyle(
+                color: Colors.indigo, 
+                fontWeight: FontWeight.bold, 
+                letterSpacing: 1.2
+              ),
+            ),
+            
+            const SizedBox(height: 8),
+            
+            const Text(
+              "Electricity & Circuits",
+              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+            ),
+            
+            const SizedBox(height: 15),
+            
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 50),
+              child: Text(
+                "Your AI Tutor is ready to explain how currents flow and the secrets of the electric circuit using NCERT notes.",
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 16, color: Colors.black54, height: 1.5),
+              ),
+            ),
+            
+            const SizedBox(height: 40),
+            
+            // MAIN ENTRY BUTTON
+            SizedBox(
+              width: 250,
+              height: 55,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.indigo,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30)
+                  ),
+                  elevation: 5,
+                ),
+                onPressed: () {
+                  Navigator.pushNamed(
+                    context, 
+                    '/learn', 
+                    arguments: 'Electricity and Circuits'
+                  );
+                },
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.psychology),
+                    SizedBox(width: 10),
+                    Text("Start AI Tutoring", style: TextStyle(fontSize: 18)),
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            // Diagnostic Test Button
+            TextButton.icon(
+              onPressed: () => Navigator.pushNamed(context, '/diagnostic'),
+              icon: const Icon(Icons.assignment_outlined, color: Colors.indigo),
+              label: const Text("Take Pre-Assessment", 
+                style: TextStyle(color: Colors.indigo)),
+            ),
+            
+            /* // PREVIOUS USERFLOW (Commented Out)
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () => Navigator.pushNamed(context, '/learn'),
+              child: const Text('Start Learning'),
+            ),
+            */
+          ],
         ),
       ),
     );

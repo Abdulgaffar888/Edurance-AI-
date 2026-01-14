@@ -182,7 +182,22 @@ class _ViewerScreenState extends State<ViewerScreen> {
                                 color: color.shade700,
                               ),
                             ),
+
+                            // ✅ PROGRESS BAR (SAFE)
+                            const SizedBox(height: 8),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(6),
+                              child: LinearProgressIndicator(
+                                value: (_currentCardIndex + 1) /
+                                    _flashcards.length,
+                                minHeight: 6,
+                                backgroundColor: Colors.grey.shade300,
+                                valueColor:
+                                    AlwaysStoppedAnimation(color.shade600),
+                              ),
+                            ),
                             const SizedBox(height: 10),
+
                             ConstrainedBox(
                               constraints: BoxConstraints(
                                 maxHeight:
