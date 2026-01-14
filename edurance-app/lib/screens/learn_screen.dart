@@ -18,12 +18,12 @@ class _LearnScreenState extends State<LearnScreen> {
   // Use the User ID as the session_id so the backend remembers this specific user
   final String sessionId = FirebaseAuth.instance.currentUser?.uid ?? "anonymous_user";
 
-  @override
-  void initState() {
-    super.initState();
-    // Start the conversation automatically
-    _sendMessage("Hi! Let's start learning about Electricity.");
-  }
+// Inside learn_screen.dart
+@override
+void initState() {
+  super.initState();
+  _sendMessage("START_LESSON_ONBOARDING"); 
+}
 
   Future<void> _sendMessage(String userText) async {
     if (userText.trim().isEmpty) return;
