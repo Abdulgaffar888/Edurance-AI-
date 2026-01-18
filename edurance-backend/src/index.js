@@ -3,18 +3,20 @@ const express = require('express');
 const cors = require('cors');
 const OpenAI = require("openai");
 const admin = require('firebase-admin');
-const tutorRoutes = require('../ai/tutor/routes');
+const tutorRoutes = require('../ai/tutor/routes'); // ONLY ONCE
 
 const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
+
+// Tutor API
 app.use('/api/tutor', tutorRoutes);
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// const openai = new OpenAI({
+//   apiKey: process.env.OPENAI_API_KEY,
+// });
 
 // Initialize Firebase Admin
 try {

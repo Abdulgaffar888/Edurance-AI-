@@ -1,24 +1,14 @@
 [
   {
-    "id": "cell_01",
-    "text": "An electric cell produces electricity from chemicals stored inside it. It has two terminals: a positive (+) and a negative (-).",
-    "difficulty": 1
+    "text": "An electric cell produces electricity from chemicals inside it.",
+    "chapter": 12,
+    "section": "Electric Cell",
+    "concept_id": "cell_basics_01"
   },
   {
-    "id": "bulb_01",
-    "text": "An electric bulb has a filament that glows when electricity passes through it. The filament is fixed to two thicker wires.",
-    "difficulty": 2
-  },
-  {
-    "id": "circuit_01",
-    "text": "An electric circuit provides a complete path for electricity to pass between the two terminals of the electric cell.",
-    "difficulty": 3
-  },
-  {
-    "id": "switch_01",
-    "text": "A switch is a simple device that either breaks the circuit or completes it.",
-    "difficulty": 4
+    "text": "A battery is made by joining two or more cells.",
+    "chapter": 12,
+    "section": "Battery",
+    "concept_id": "battery_basics_01"
   }
 ]
-
-

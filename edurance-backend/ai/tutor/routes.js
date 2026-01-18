@@ -1,6 +1,6 @@
 const express = require("express");
 const { queryRag } = require("../rag/query");
-const { runTutorAgent } = require("./agent");
+const { runTutorAgent } = require("./agent.js");
 
 const router = express.Router();
 
@@ -27,9 +27,13 @@ function ensureSchemaResponse(obj) {
   };
 }
 
-// POST /api/tutor/chat (mounted at /api/tutor)
+// POST /api/tutor/chat
 router.post("/chat", async (req, res) => {
   try {
+    console.log("🎯 TUTOR CHAT REQUEST");
+    console.log("Session ID:", req.body.session_id);
+    console.log("Message:", req.body.message?.substring(0, 100));
+
     const { message, session_id } = req.body || {};
     if (typeof message !== "string" || message.trim().length === 0) {
       return res.status(400).json(
@@ -62,6 +66,13 @@ router.post("/chat", async (req, res) => {
     });
 
     const context = rag?.chunks || [];
+    
+    console.log(`📚 Context found: ${context.length} chunks`);
+    if (context.length > 0) {
+      console.log("First chunk:", context[0].text?.substring(0, 100) + "...");
+    }
+
+    // FIXED: Make sure runTutorAgent is properly called
     const agentResp = await runTutorAgent({ message, session, context });
     const finalResp = ensureSchemaResponse(agentResp);
 
@@ -72,8 +83,19 @@ router.post("/chat", async (req, res) => {
       }
     }
 
+    // Add metadata
+    finalResp.session_id = session_id;
+    finalResp.timestamp = new Date().toISOString();
+
+    console.log("✅ Response generated:");
+    console.log("Teaching:", finalResp.teaching_point?.substring(0, 100) + "...");
+    console.log("Question:", finalResp.question);
+
     return res.json(finalResp);
   } catch (e) {
+    console.error("❌ Tutor error:", e.message);
+    console.error("Stack:", e.stack);
+    
     return res.status(200).json(
       ensureSchemaResponse({
         teaching_point: "That's interesting, but let's stick to our NCERT circuits chapter!",
@@ -86,5 +108,3 @@ router.post("/chat", async (req, res) => {
 });
 
 module.exports = router;
-
-
