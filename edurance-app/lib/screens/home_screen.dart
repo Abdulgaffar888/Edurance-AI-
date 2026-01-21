@@ -8,9 +8,9 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Edurance AI Explorer', 
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.indigo,
+        title: const Text('Edurance AI ',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        backgroundColor: const Color(0xFF3D9974),
         elevation: 0,
         actions: [
           IconButton(
@@ -27,18 +27,16 @@ class HomeScreen extends StatelessWidget {
       ),
       body: Container(
         width: double.infinity,
-        decoration: BoxDecoration(
-          // Fixed: Changed 'getGradient' to the standard 'gradient' parameter
+        decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Colors.indigo.shade50, Colors.white],
+            colors: [Color(0xFF3D9974), Colors.white],
           ),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Module Icon with a "Glow" effect
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
@@ -54,27 +52,27 @@ class HomeScreen extends StatelessWidget {
               ),
               child: const Icon(Icons.bolt, size: 80, color: Colors.amber),
             ),
-            
+
             const SizedBox(height: 30),
-            
+
             const Text(
               "Physics: Grade 6",
               style: TextStyle(
-                color: Colors.indigo, 
-                fontWeight: FontWeight.bold, 
-                letterSpacing: 1.2
+                color: Color(0xFF3D9974),
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.2,
               ),
             ),
-            
+
             const SizedBox(height: 8),
-            
+
             const Text(
               "Electricity & Circuits",
               style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
             ),
-            
+
             const SizedBox(height: 15),
-            
+
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 50),
               child: Text(
@@ -83,10 +81,9 @@ class HomeScreen extends StatelessWidget {
                 style: TextStyle(fontSize: 16, color: Colors.black54, height: 1.5),
               ),
             ),
-            
+
             const SizedBox(height: 40),
-            
-            // MAIN ENTRY BUTTON
+
             SizedBox(
               width: 250,
               height: 55,
@@ -95,15 +92,14 @@ class HomeScreen extends StatelessWidget {
                   backgroundColor: Colors.indigo,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30)
-                  ),
+                      borderRadius: BorderRadius.circular(30)),
                   elevation: 5,
                 ),
                 onPressed: () {
                   Navigator.pushNamed(
-                    context, 
-                    '/learn', 
-                    arguments: 'Electricity and Circuits'
+                    context,
+                    '/learn',
+                    arguments: 'Electricity and Circuits',
                   );
                 },
                 child: const Row(
@@ -119,21 +115,60 @@ class HomeScreen extends StatelessWidget {
 
             const SizedBox(height: 20),
 
-            // Diagnostic Test Button
-            TextButton.icon(
-              onPressed: () => Navigator.pushNamed(context, '/diagnostic'),
-              icon: const Icon(Icons.assignment_outlined, color: Colors.indigo),
-              label: const Text("Take Pre-Assessment", 
-                style: TextStyle(color: Colors.indigo)),
+            Container(
+              width: 250,
+              height: 55,
+              child: OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Colors.indigo, width: 2),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30)),
+                ),
+                onPressed: () => Navigator.pushNamed(context, '/diagnostic'),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.assignment_outlined, color: Colors.indigo),
+                    SizedBox(width: 10),
+                    Text("Assessment Test",
+                        style:
+                            TextStyle(color: Colors.indigo, fontSize: 18)),
+                  ],
+                ),
+              ),
             ),
-            
-            /* // PREVIOUS USERFLOW (Commented Out)
+
             const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () => Navigator.pushNamed(context, '/learn'),
-              child: const Text('Start Learning'),
+
+            Container(
+              width: 250,
+              height: 55,
+              child: OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Colors.green, width: 2),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30)),
+                ),
+                onPressed: () => Navigator.pushNamed(context, '/progress'),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.analytics_outlined, color: Colors.green),
+                    SizedBox(width: 10),
+                    Text("Progress Dashboard",
+                        style:
+                            TextStyle(color: Colors.green, fontSize: 18)),
+                  ],
+                ),
+              ),
             ),
-            */
+
+            const SizedBox(height: 30),
+
+            const Text(
+              "Take assessment first for personalized learning",
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+            ),
           ],
         ),
       ),

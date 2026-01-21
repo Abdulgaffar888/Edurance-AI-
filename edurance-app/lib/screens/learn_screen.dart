@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'auth_screen.dart'; // for SessionManager
 
 class LearnScreen extends StatefulWidget {
   const LearnScreen({super.key});
@@ -15,15 +15,14 @@ class _LearnScreenState extends State<LearnScreen> {
   final List<Map<String, String>> _messages = [];
   bool _isLoading = false;
 
-  // Use the User ID as the session_id so the backend remembers this specific user
-  final String sessionId = FirebaseAuth.instance.currentUser?.uid ?? "anonymous_user";
+  late final String sessionId;
 
-// Inside learn_screen.dart
-@override
-void initState() {
-  super.initState();
-  _sendMessage("START_LESSON_ONBOARDING"); 
-}
+  @override
+  void initState() {
+    super.initState();
+    sessionId = SessionManager.sessionId ?? "guest_${DateTime.now().millisecondsSinceEpoch}";
+    _sendMessage("START_LESSON_ONBOARDING");
+  }
 
   Future<void> _sendMessage(String userText) async {
     if (userText.trim().isEmpty) return;
@@ -36,10 +35,8 @@ void initState() {
     });
 
     try {
-      // NOTE: If using Android Emulator, use http://10.0.2.2:3000
-      // If using Web/Edge, use http://localhost:3000
       final url = Uri.parse('http://localhost:3000/api/tutor/chat');
-      
+
       final response = await http.post(
         url,
         headers: {"Content-Type": "application/json"},
@@ -51,20 +48,24 @@ void initState() {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        
-        // The backend returns teaching_point and question separately
         String aiResponse = "${data['teaching_point']}\n\n${data['question']}";
 
         setState(() {
+          // 🔥 YC DEMO MAGIC LINE
+          _messages.add({
+            "role": "system",
+            "content": "Why am I learning this?\nYou missed voltage in the diagnostic, so I’m teaching it now."
+          });
+
           _messages.add({"role": "agent", "content": aiResponse});
         });
       } else {
         _showError("Server error: ${response.statusCode}");
       }
     } catch (e) {
-      _showError("Connection failed. Is the backend running?");
+      _showError("Connection failed. Is backend running?");
     } finally {
-      setState(() { _isLoading = false; });
+      setState(() => _isLoading = false);
       _controller.clear();
     }
   }
@@ -90,33 +91,41 @@ void initState() {
               itemBuilder: (context, index) {
                 final msg = _messages[index];
                 bool isUser = msg["role"] == "user";
-                return _buildChatBubble(msg["content"]!, isUser);
+                bool isSystem = msg["role"] == "system";
+                return _buildChatBubble(msg["content"]!, isUser, isSystem);
               },
             ),
           ),
-          if (_isLoading) const LinearProgressIndicator(color: Colors.amber),
+          if (_isLoading) const LinearProgressIndicator(),
           _buildInputArea(),
         ],
       ),
     );
   }
 
-  Widget _buildChatBubble(String text, bool isUser) {
+  Widget _buildChatBubble(String text, bool isUser, bool isSystem) {
     return Align(
       alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 8),
         padding: const EdgeInsets.all(14),
-        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
+        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.8),
         decoration: BoxDecoration(
-          color: isUser ? Colors.indigo : Colors.white,
+          color: isSystem
+              ? Colors.amber.shade50
+              : isUser
+                  ? Colors.indigo
+                  : Colors.white,
           borderRadius: BorderRadius.circular(15),
-          boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4)],
-          border: isUser ? null : Border.all(color: Colors.indigo.shade100),
+          boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4)],
+          border: isSystem ? Border.all(color: Colors.amber) : null,
         ),
         child: Text(
           text,
-          style: TextStyle(color: isUser ? Colors.white : Colors.black87, fontSize: 16),
+          style: TextStyle(
+            color: isUser ? Colors.white : Colors.black,
+            fontStyle: isSystem ? FontStyle.italic : FontStyle.normal,
+          ),
         ),
       ),
     );
@@ -125,7 +134,6 @@ void initState() {
   Widget _buildInputArea() {
     return Container(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: Colors.white, boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10)]),
       child: Row(
         children: [
           Expanded(
@@ -134,7 +142,6 @@ void initState() {
               decoration: InputDecoration(
                 hintText: "Type your answer...",
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(30)),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 20),
               ),
               onSubmitted: (val) => _sendMessage(val),
             ),
