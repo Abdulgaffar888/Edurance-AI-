@@ -1,102 +1,103 @@
-// ai/tutor/agent.js - HUMAN-LIKE, CURRICULUM-DRIVEN TUTOR
+// ai/tutor/agent.js
 const AIService = require("./ai-service.js");
 const aiService = new AIService();
 const studentKnowledge = new Map();
 
-// Encouragement library for variety
 const encouragements = [
   "You're a natural at this!",
   "Keep going, you're doing great!",
   "That's a brilliant observation!",
   "I love how you're thinking!",
-  "Spot on! You've got a real spark for science.",
-  "Excellent effort!"
+  "Spot on! You've got a real spark for science."
 ];
 
 async function runTutorAgent({ message, session, context }) {
   const sessionId = session.session_id;
   const studentName = session.user_name || "young scientist";
 
+  // 1. PERSISTENT STATE MANAGEMENT
   if (!studentKnowledge.has(sessionId)) {
     studentKnowledge.set(sessionId, { 
       concepts: {}, 
-      isFirstMessage: true 
+      isFirstMessage: true,
+      currentTopicIndex: 0 
     });
   }
   const student = studentKnowledge.get(sessionId);
   const randomEncouragement = encouragements[Math.floor(Math.random() * encouragements.length)];
 
+  // 2. CURRICULUM DEFINITION
+  const curriculum = [
+    "Electric current (flow of electrons)",
+    "Potential difference (voltage)",
+    "Resistance",
+    "Ohm’s Law",
+    "Circuit components (cells, bulbs, switches)"
+  ];
+  const currentTopic = curriculum[student.currentTopicIndex];
+
+  // 3. ENHANCED SYSTEM PROMPT
   const systemPrompt = `
-You are Edurance AI, a warm, intellectually strong Grade 6 Science teacher.
-YOUR GOAL: TEACH the student about Electricity and Circuits. Focus on things they don't know yet.
+You are Edurance AI, a warm Grade 6 Science teacher. 
+GOAL: Teach Electricity and Circuits. Be a guide, not a quiz bot.
 
-BE OPEN TO QUESTIONS: 
-- If the student asks a question, answer it deeply and clearly before moving back to the curriculum.
-- Encourage them to ask "Why?" or "How?".
+STATE DATA:
+- Student Name: ${studentName}
+- Is Onboarding: ${student.isFirstMessage}
+- Current Lesson: ${currentTopic}
 
-CURRICULUM ORDER:
-1. Electric current (Start here)
-2. Potential difference
-3. Resistance
-4. Ohm’s Law (basic)
-5. Ohmic and non-ohmic materials
-6. Basic circuit components
-
-HUMAN RULES:
-- **ONBOARDING RULE (isFirstMessage: ${student.isFirstMessage})**: 
-    1. Start with a warm greeting: "Hi ${studentName}! Hope you're doing well."
-    2. Introduce the topic: "Today, we're going to explore the amazing world of Electricity and Circuits!"
-    3. Give a basic definition of Electric Current.
-    4. ASK A SIMPLE HOOK QUESTION (Rare/Easy): e.g., "Have you ever wondered how your phone stays powered or how a lightbulb stays on?"
-    5. DO NOT ask a checking/test question yet. Just ask if they are ready or use the hook.
-
-- **TEACHING RULES (Subsequent messages)**:
-    1. VALIDATION: Use "${randomEncouragement}" to acknowledge their answer.
-    2. COMFORT: If they say "I don't know," say: "No worries! That's why we're here. Let me explain it differently."
-    3. ACKNOWLEDGE: Always reply directly to what the student said before moving to the next point.
-
-TEACHING STRUCTURE:
-- Validation/Greeting
-- Concept (Definition + Why + Example)
-- One Question (either "Did you understand?" or a simple checking question).
+RULES:
+1. **NO REPETITION**: If isFirstMessage is false, DO NOT say "Hi/Hope you're doing well" again. Start by acknowledging the student's specific answer: "${message}".
+2. **VALIDATION**: If the student answers (like "battery"), say: "${randomEncouragement} Yes, a battery provides the push!"
+3. **TEACHING OVER TESTING**: Explain the concept deeply. For Grade 6, use the "Water Pipe" analogy. 
+4. **ONBOARDING ONLY**: Use the "Phone/Lightbulb" hook ONLY if isFirstMessage is true. If false, move to explaining HOW the battery works.
+5. **QUESTION RULE**: Only ask "Does that make sense?" or "Want to know how the battery pushes the electricity?" Stop asking quiz questions.
 
 STRICT JSON FORMAT:
 {
-  "teaching_point": "Warm text including validation and science content",
-  "question": "The specific question or 'Does that make sense?'",
-  "concept_id": "current_basics",
-  "is_concept_cleared": false
+  "teaching_point": "Warm acknowledgement of '${message}' + Deep science explanation.",
+  "question": "A gentle check-in or invitation to ask a question.",
+  "concept_id": "current_basics"
 }
 `;
 
   try {
     const raw = await aiService.generateTeachingResponse(systemPrompt, message, context);
-    const res = typeof raw === 'string' ? JSON.parse(raw.replace(/```json|```/g, "").trim()) : raw;
+    
+    // Cleaning and Parsing logic
+    let res;
+    try {
+        const cleaned = typeof raw === 'string' ? raw.replace(/```json|```/g, "").trim() : raw;
+        res = typeof cleaned === 'string' ? JSON.parse(cleaned) : cleaned;
+    } catch (e) {
+        console.error("JSON Parse Error, using fallback");
+        res = { teaching_point: raw, question: "Does that make sense?", concept_id: "fallback" };
+    }
 
-    // After the first turn, set isFirstMessage to false
-    student.isFirstMessage = false;
+    // 4. UPDATE STATE AFTER SUCCESSFUL RESPONSE
+    if (student.isFirstMessage) {
+        student.isFirstMessage = false; 
+    }
 
-    // Concept Tracking
-    const cId = res.concept_id || "intro";
-    if (!student.concepts[cId]) {
-      student.concepts[cId] = { practiced: 1 };
-    } else {
-      student.concepts[cId].practiced += 1;
+    // Increment progress if they seem to understand
+    const cId = res.concept_id || "basics";
+    student.concepts[cId] = (student.concepts[cId] || 0) + 1;
+    if (student.concepts[cId] >= 3) {
+      student.currentTopicIndex = Math.min(student.currentTopicIndex + 1, curriculum.length - 1);
     }
 
     return {
       teaching_point: res.teaching_point,
       question: res.question,
       concept_id: cId,
-      is_concept_cleared: student.concepts[cId].practiced >= 3
+      is_concept_cleared: student.concepts[cId] >= 3
     };
-
   } catch (error) {
-    console.error("Tutor Error:", error);
+    console.error("Tutor Agent Error:", error);
     return {
-      teaching_point: `Oh, I'm sorry ${studentName}, my wires got a bit crossed! Let's get back to our lesson.`,
-      question: "Are you ready to continue?",
-      concept_id: "error_recovery",
+      teaching_point: "I'm sorry, I lost my train of thought! Let's continue talking about " + currentTopic,
+      question: "Shall we?",
+      concept_id: "error",
       is_concept_cleared: false
     };
   }
