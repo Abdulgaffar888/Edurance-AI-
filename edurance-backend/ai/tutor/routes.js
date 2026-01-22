@@ -22,12 +22,28 @@ function getOrCreateSession(session_id) {
 
 function ensureSchemaResponse(obj) {
   return {
-    teaching_point: typeof obj?.teaching_point === "string" ? obj.teaching_point : "That's interesting, but let's stick to our NCERT circuits chapter!",
-    question: typeof obj?.question === "string" ? obj.question : "Can you tell me what a switch does in a circuit?",
-    concept_id: typeof obj?.concept_id === "string" ? obj.concept_id : "switch_01",
-    is_concept_cleared: typeof obj?.is_concept_cleared === "boolean" ? obj.is_concept_cleared : false,
+    teaching_point:
+      typeof obj?.teaching_point === "string" && obj.teaching_point.trim().length > 0
+        ? obj.teaching_point
+        : "Let us continue with electricity using a simple, clear example.",
+
+    question:
+      typeof obj?.question === "string" && obj.question.trim().length > 0
+        ? obj.question
+        : "Can you tell me what part you want to understand better?",
+
+    concept_id:
+      typeof obj?.concept_id === "string"
+        ? obj.concept_id
+        : "electricity_basics",
+
+    is_concept_cleared:
+      typeof obj?.is_concept_cleared === "boolean"
+        ? obj.is_concept_cleared
+        : false,
   };
 }
+
 
 // POST /api/tutor/chat
 router.post("/chat", async (req, res) => {

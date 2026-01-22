@@ -15,6 +15,11 @@ async function runTutorAgent({ message, session, context }) {
   const sessionId = session.session_id;
   const studentName = session.user_name || "young scientist";
 
+  const cleanContext = context.filter(
+    c => !c.text?.toLowerCase().includes("stick to")
+  );
+
+  
   // 1. PERSISTENT STATE MANAGEMENT
   if (!studentKnowledge.has(sessionId)) {
     studentKnowledge.set(sessionId, { 
@@ -40,6 +45,7 @@ async function runTutorAgent({ message, session, context }) {
   const systemPrompt = `
 You are Edurance AI, a warm Grade 6 Science teacher. 
 GOAL: Teach Electricity and Circuits. Be a guide, not a quiz bot.
+Each response must start differently from the previous one.
 
 STATE DATA:
 - Student Name: ${studentName}
@@ -52,6 +58,13 @@ RULES:
 3. **TEACHING OVER TESTING**: Explain the concept deeply. For Grade 6, use the "Water Pipe" analogy. 
 4. **ONBOARDING ONLY**: Use the "Phone/Lightbulb" hook ONLY if isFirstMessage is true. If false, move to explaining HOW the battery works.
 5. **QUESTION RULE**: Only ask "Does that make sense?" or "Want to know how the battery pushes the electricity?" Stop asking quiz questions.
+
+ANTI-REPETITION RULE (CRITICAL):
+- You must NEVER repeat the same sentence, phrase, or opening line
+  that you have used in any previous response in this session.
+- If you detect similar wording, you MUST rephrase completely.
+- Especially NEVER repeat fallback or redirection sentences.
+
 
 STRICT JSON FORMAT:
 {

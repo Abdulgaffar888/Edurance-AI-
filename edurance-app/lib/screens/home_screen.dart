@@ -77,7 +77,7 @@ class HomeScreen extends StatelessWidget {
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 50),
               child: Text(
-                "Your AI Tutor is ready to explain how currents flow and the secrets of the electric circuit using NCERT notes.",
+                "Your AI Tutor is ready to explain how currents flow and the secrets of the electric circuit.",
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 16, color: Colors.black54, height: 1.5),
               ),
