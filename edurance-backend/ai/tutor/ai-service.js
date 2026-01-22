@@ -1,6 +1,6 @@
 // ai/tutor/ai-service.js - REPLACE ENTIRE FILE
 const { GoogleGenerativeAI } = require("@google/generative-ai");
-// const Groq = require("groq-sdk");
+const Groq = require("groq-sdk");
 
 class AIService {
   constructor() {

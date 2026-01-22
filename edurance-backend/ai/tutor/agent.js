@@ -84,7 +84,7 @@ STRICT JSON FORMAT:
         res = typeof cleaned === 'string' ? JSON.parse(cleaned) : cleaned;
     } catch (e) {
         console.error("JSON Parse Error, using fallback");
-        res = { teaching_point: raw, question: "Does that make sense?", concept_id: "fallback" };
+        res = { teaching_point: raw, question: "did you understand ?", concept_id: "fallback" };
     }
 
     // 4. UPDATE STATE AFTER SUCCESSFUL RESPONSE
