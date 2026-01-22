@@ -40,9 +40,10 @@ class _ProgressScreenState extends State<ProgressScreen> {
         _errorMessage = null;
       });
 
-      final sessionId = SessionManager.sessionId;
-      if (sessionId == null) throw Exception('Session not found');
-    
+      final sessionId = SessionManager.sessionId 
+         ?? "guest_${DateTime.now().millisecondsSinceEpoch}";
+      SessionManager.sessionId = sessionId;
+
       final response = await _apiService.getTutorProgress(sessionId);
 
       
@@ -116,11 +117,11 @@ class _ProgressScreenState extends State<ProgressScreen> {
               children: [
                 Text(
                   'Overall Progress',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.indigo),
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: const Color(0xFF3D9974)),
                 ),
                 Text(
                   '$percentage%',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.indigo),
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: const Color(0xFF3D9974)),
                 ),
               ],
             ),
@@ -128,7 +129,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
             LinearProgressIndicator(
               value: percentage / 100,
               backgroundColor: Colors.grey.shade200,
-              color: Colors.indigo,
+              color: const Color(0xFF3D9974),
               minHeight: 12,
               borderRadius: BorderRadius.circular(6),
             ),
@@ -179,7 +180,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
           children: [
             Text(
               'Topic Progress',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.indigo),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold,color: const Color(0xFF3D9974)),
             ),
             SizedBox(height: 16),
             ..._topics.map((topic) => _buildTopicItem(topic)),
@@ -306,7 +307,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
           );
         },
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.indigo,
+          backgroundColor: const Color(0xFF3D9974),
           padding: EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
@@ -348,7 +349,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
               Navigator.pushReplacementNamed(context, '/diagnostic');
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.indigo,
+              backgroundColor: const Color(0xFF3D9974),
               padding: EdgeInsets.symmetric(horizontal: 32, vertical: 16),
             ),
             child: Text('Take Assessment'),
@@ -363,7 +364,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Progress Dashboard'),
-        backgroundColor: Colors.indigo,
+        backgroundColor: const Color(0xFF3D9974),
         actions: [
           IconButton(
             icon: Icon(Icons.refresh),
@@ -372,7 +373,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
         ],
       ),
       body: _isLoading
-          ? Center(child: CircularProgressIndicator(color: Colors.indigo))
+          ? Center(child: CircularProgressIndicator(color: const Color(0xFF3D9974)))
           : _errorMessage != null
               ? Center(
                   child: Column(
@@ -397,7 +398,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
                   ? _buildEmptyState()
                   : RefreshIndicator(
                       onRefresh: _loadProgress,
-                      color: Colors.indigo,
+                      color: const Color(0xFF3D9974),
                       child: SingleChildScrollView(
                         physics: AlwaysScrollableScrollPhysics(),
                         child: Column(

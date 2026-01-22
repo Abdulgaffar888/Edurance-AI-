@@ -1,6 +1,8 @@
 const express = require("express");
 const { queryRag } = require("../rag/query");
 const { runTutorAgent } = require("./agent.js");
+const { startDiagnosticTest, submitDiagnosticTest } = require("./diagnostic.js");
+const { getLearningProgress } = require("./progress.js");
 
 const router = express.Router();
 
@@ -104,6 +106,98 @@ router.post("/chat", async (req, res) => {
         is_concept_cleared: false,
       })
     );
+  }
+});
+
+// POST /api/tutor/diagnostic/start
+router.post("/diagnostic/start", async (req, res) => {
+  try {
+    console.log("🎯 DIAGNOSTIC TEST START REQUEST");
+
+    const testData = startDiagnosticTest();
+
+    console.log("✅ Diagnostic test started - 12 questions ready");
+
+    return res.json({
+      success: true,
+      ...testData
+    });
+
+  } catch (error) {
+    console.error("❌ Diagnostic start error:", error.message);
+    return res.status(500).json({
+      success: false,
+      error: "Failed to start diagnostic test",
+      message: error.message
+    });
+  }
+});
+
+// POST /api/tutor/diagnostic/submit
+router.post("/diagnostic/submit", async (req, res) => {
+  try {
+    console.log("🎯 DIAGNOSTIC TEST SUBMIT REQUEST");
+
+    const { session_id, answers } = req.body;
+
+    if (!session_id || !answers) {
+      return res.status(400).json({
+        success: false,
+        error: "Missing required fields: session_id and answers"
+      });
+    }
+
+    const result = submitDiagnosticTest(session_id, answers);
+
+    if (result.success) {
+      console.log("✅ Diagnostic test submitted successfully");
+      return res.json(result);
+    } else {
+      console.error("❌ Diagnostic submission failed:", result.error);
+      return res.status(400).json(result);
+    }
+
+  } catch (error) {
+    console.error("❌ Diagnostic submit error:", error.message);
+    return res.status(500).json({
+      success: false,
+      error: "Failed to submit diagnostic test",
+      message: error.message
+    });
+  }
+});
+
+// GET /api/tutor/progress/:session_id
+router.get("/progress/:session_id", async (req, res) => {
+  try {
+    console.log("🎯 PROGRESS REQUEST");
+
+    const { session_id } = req.params;
+
+    if (!session_id) {
+      return res.status(400).json({
+        success: false,
+        error: "Session ID is required"
+      });
+    }
+
+    const progressData = getLearningProgress(session_id);
+
+    if (progressData.success) {
+      console.log("✅ Progress data retrieved successfully");
+      return res.json(progressData);
+    } else {
+      console.log("⚠️ No progress data found");
+      return res.status(404).json(progressData);
+    }
+
+  } catch (error) {
+    console.error("❌ Progress retrieval error:", error.message);
+    return res.status(500).json({
+      success: false,
+      error: "Failed to retrieve progress data",
+      message: error.message
+    });
   }
 });
 

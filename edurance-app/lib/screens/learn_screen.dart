@@ -35,7 +35,8 @@ class _LearnScreenState extends State<LearnScreen> {
     });
 
     try {
-      final url = Uri.parse('http://localhost:3000/api/tutor/chat');
+      final url = Uri.parse('http://192.168.1.4:3000/api/tutor/chat');
+
 
       final response = await http.post(
         url,
@@ -52,10 +53,7 @@ class _LearnScreenState extends State<LearnScreen> {
 
         setState(() {
           // 🔥 YC DEMO MAGIC LINE
-          _messages.add({
-            "role": "system",
-            "content": "Why am I learning this?\nYou missed voltage in the diagnostic, so I’m teaching it now."
-          });
+         
 
           _messages.add({"role": "agent", "content": aiResponse});
         });
@@ -79,7 +77,8 @@ class _LearnScreenState extends State<LearnScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("AI Tutor: Electricity"),
-        backgroundColor: Colors.indigo,
+        backgroundColor: const Color(0xFF3D9974)
+,
         foregroundColor: Colors.white,
       ),
       body: Column(
@@ -148,7 +147,8 @@ class _LearnScreenState extends State<LearnScreen> {
           ),
           const SizedBox(width: 8),
           CircleAvatar(
-            backgroundColor: Colors.indigo,
+            backgroundColor: const Color(0xFF3D9974)
+,
             child: IconButton(
               icon: const Icon(Icons.send, color: Colors.white),
               onPressed: () => _sendMessage(_controller.text),

@@ -785,6 +785,6 @@ function getDefaultSummary(userId, days) {
   };
 }
 
-app.listen(port, () => {
-  console.log(`✅ Backend running on http://localhost:${port}`);
+app.listen(3000, "0.0.0.0", () => {
+  console.log("Server running on all interfaces on port 3000");
 });

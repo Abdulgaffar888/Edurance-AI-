@@ -1,84 +1,103 @@
-// ai/tutor/agent.js - SIMPLE WORKING VERSION
+// ai/tutor/agent.js - HUMAN-LIKE, CURRICULUM-DRIVEN TUTOR
 const AIService = require("./ai-service.js");
-
-// Initialize AI service
 const aiService = new AIService();
+const studentKnowledge = new Map();
 
-// Simple student tracking
-const studentKnowledge = new Map(); // session_id → {concepts: {}}
+// Encouragement library for variety
+const encouragements = [
+  "You're a natural at this!",
+  "Keep going, you're doing great!",
+  "That's a brilliant observation!",
+  "I love how you're thinking!",
+  "Spot on! You've got a real spark for science.",
+  "Excellent effort!"
+];
 
 async function runTutorAgent({ message, session, context }) {
-  console.log(`🤖 Teaching: "${message.substring(0, 50)}..."`);
-  
+  const sessionId = session.session_id;
+  const studentName = session.user_name || "young scientist";
+
+  if (!studentKnowledge.has(sessionId)) {
+    studentKnowledge.set(sessionId, { 
+      concepts: {}, 
+      isFirstMessage: true 
+    });
+  }
+  const student = studentKnowledge.get(sessionId);
+  const randomEncouragement = encouragements[Math.floor(Math.random() * encouragements.length)];
+
+  const systemPrompt = `
+You are Edurance AI, a warm, intellectually strong Grade 6 Science teacher.
+YOUR GOAL: TEACH the student about Electricity and Circuits. Focus on things they don't know yet.
+
+BE OPEN TO QUESTIONS: 
+- If the student asks a question, answer it deeply and clearly before moving back to the curriculum.
+- Encourage them to ask "Why?" or "How?".
+
+CURRICULUM ORDER:
+1. Electric current (Start here)
+2. Potential difference
+3. Resistance
+4. Ohm’s Law (basic)
+5. Ohmic and non-ohmic materials
+6. Basic circuit components
+
+HUMAN RULES:
+- **ONBOARDING RULE (isFirstMessage: ${student.isFirstMessage})**: 
+    1. Start with a warm greeting: "Hi ${studentName}! Hope you're doing well."
+    2. Introduce the topic: "Today, we're going to explore the amazing world of Electricity and Circuits!"
+    3. Give a basic definition of Electric Current.
+    4. ASK A SIMPLE HOOK QUESTION (Rare/Easy): e.g., "Have you ever wondered how your phone stays powered or how a lightbulb stays on?"
+    5. DO NOT ask a checking/test question yet. Just ask if they are ready or use the hook.
+
+- **TEACHING RULES (Subsequent messages)**:
+    1. VALIDATION: Use "${randomEncouragement}" to acknowledge their answer.
+    2. COMFORT: If they say "I don't know," say: "No worries! That's why we're here. Let me explain it differently."
+    3. ACKNOWLEDGE: Always reply directly to what the student said before moving to the next point.
+
+TEACHING STRUCTURE:
+- Validation/Greeting
+- Concept (Definition + Why + Example)
+- One Question (either "Did you understand?" or a simple checking question).
+
+STRICT JSON FORMAT:
+{
+  "teaching_point": "Warm text including validation and science content",
+  "question": "The specific question or 'Does that make sense?'",
+  "concept_id": "current_basics",
+  "is_concept_cleared": false
+}
+`;
+
   try {
-    // Get student knowledge
-    const sessionId = session.session_id;
-    if (!studentKnowledge.has(sessionId)) {
-      studentKnowledge.set(sessionId, { concepts: {} });
-    }
-    const student = studentKnowledge.get(sessionId);
-    
-    // Simple system prompt
-    const systemPrompt = `You are a friendly Grade 6 Science teacher named Edurance AI.
-    Teach about electricity and circuits in simple terms.
-    Explain one concept at a time, then ask one question.
-    Keep responses short and engaging.
-    
-    Context: ${context[0]?.text?.substring(0, 200) || "Electric circuits basics"}
-    
-    Student question: "${message}"
-    
-    Return JSON: {
-      "teaching_point": "Your explanation here",
-      "question": "One follow-up question",
-      "concept_id": "unique_id",
-      "is_concept_cleared": false
-    }`;
-    
-    // Get AI response
-    const aiResponse = await aiService.generateTeachingResponse(
-      systemPrompt,
-      message,
-      context
-    );
-    
-    // Track concept
-    const conceptId = aiResponse.concept_id;
-    if (!student.concepts[conceptId]) {
-      student.concepts[conceptId] = { practiced: 1, lastTime: Date.now() };
+    const raw = await aiService.generateTeachingResponse(systemPrompt, message, context);
+    const res = typeof raw === 'string' ? JSON.parse(raw.replace(/```json|```/g, "").trim()) : raw;
+
+    // After the first turn, set isFirstMessage to false
+    student.isFirstMessage = false;
+
+    // Concept Tracking
+    const cId = res.concept_id || "intro";
+    if (!student.concepts[cId]) {
+      student.concepts[cId] = { practiced: 1 };
     } else {
-      student.concepts[conceptId].practiced += 1;
-      student.concepts[conceptId].lastTime = Date.now();
+      student.concepts[cId].practiced += 1;
     }
-    
-    // Check if concept cleared (practiced 3+ times)
-    const isCleared = student.concepts[conceptId].practiced >= 3;
-    
-    console.log(`✅ Teaching complete (${aiResponse._meta?.source})`);
-    console.log(`Concept: ${conceptId}, Practiced: ${student.concepts[conceptId].practiced} times`);
-    
+
     return {
-      teaching_point: aiResponse.teaching_point,
-      question: aiResponse.question,
-      concept_id: conceptId,
-      is_concept_cleared: isCleared,
-      _meta: {
-        source: aiResponse._meta?.source || 'unknown',
-        practiced_count: student.concepts[conceptId].practiced
-      }
+      teaching_point: res.teaching_point,
+      question: res.question,
+      concept_id: cId,
+      is_concept_cleared: student.concepts[cId].practiced >= 3
     };
-    
+
   } catch (error) {
-    console.error("Agent error:", error.message);
-    
-    // Simple fallback
-    const chunk = context[0];
+    console.error("Tutor Error:", error);
     return {
-      teaching_point: chunk?.text ? `Based on: ${chunk.text.substring(0, 80)}...` : "Let's learn about electricity!",
-      question: "What would you like to explore?",
-      concept_id: chunk?.id || "fallback_01",
-      is_concept_cleared: false,
-      _meta: { source: 'error_fallback' }
+      teaching_point: `Oh, I'm sorry ${studentName}, my wires got a bit crossed! Let's get back to our lesson.`,
+      question: "Are you ready to continue?",
+      concept_id: "error_recovery",
+      is_concept_cleared: false
     };
   }
 }

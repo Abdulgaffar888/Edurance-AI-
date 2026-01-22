@@ -25,7 +25,9 @@ class _AuthScreenState extends State<AuthScreen> {
       SessionManager.sessionId = sessionId;
 
       // Go to home
-      Navigator.pushReplacementNamed(context, '/home');
+      SessionManager.sessionId = "user_${DateTime.now().millisecondsSinceEpoch}";
+    Navigator.pushReplacementNamed(context, '/home');
+
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Login failed: $e')),
@@ -44,10 +46,15 @@ class _AuthScreenState extends State<AuthScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text('Edurance AI', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
+              const Text(
+                'Edurance AI',
+                style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 10),
-              Text('Personalized Learning for Grade 6',
-                  style: TextStyle(fontSize: 16, color: Colors.grey.shade600)),
+              Text(
+                'Personalized Learning for Grade 6',
+                style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
+              ),
               const SizedBox(height: 40),
               TextField(
                 controller: _phoneController,
@@ -66,11 +73,21 @@ class _AuthScreenState extends State<AuthScreen> {
                   onPressed: _isLoading ? null : _handleLogin,
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
-                    backgroundColor: Colors.indigo,
+                    backgroundColor: const Color(0xFF3D9974), // Fixed the comma/syntax here
                   ),
                   child: _isLoading
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text('Start', style: TextStyle(fontSize: 16)),
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text(
+                          'Start',
+                          style: TextStyle(fontSize: 16, color: Colors.white),
+                        ),
                 ),
               ),
             ],
@@ -80,3 +97,4 @@ class _AuthScreenState extends State<AuthScreen> {
     );
   }
 }
+

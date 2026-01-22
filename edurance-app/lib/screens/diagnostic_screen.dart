@@ -278,7 +278,7 @@ class _DiagnosticScreenState extends State<DiagnosticScreen> {
 
         title: Text('Assessment Test'),
 
-        backgroundColor: Colors.indigo,
+        backgroundColor: const Color(0xFF3D9974),
 
       ),
 
@@ -298,7 +298,7 @@ class _DiagnosticScreenState extends State<DiagnosticScreen> {
 
               'Question ${_currentQuestionIndex + 1}/${_questions.length}',
 
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.indigo),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: const Color(0xFF3D9974)),
 
             ),
 
@@ -376,7 +376,8 @@ class _DiagnosticScreenState extends State<DiagnosticScreen> {
 
                             CircleAvatar(
 
-                              backgroundColor: isSelected ? Colors.indigo : Colors.grey.shade200,
+                              backgroundColor: isSelected ? const Color(0xFF3D9974) : Colors.grey.shade200,
+
 
                               child: Text(
 
@@ -454,7 +455,7 @@ class _DiagnosticScreenState extends State<DiagnosticScreen> {
 
                     onPressed: _nextQuestion,
 
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.indigo),
+                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF3D9974)),
 
                     child: Text('Next'),
 
@@ -492,7 +493,7 @@ class _DiagnosticScreenState extends State<DiagnosticScreen> {
 
               backgroundColor: Colors.grey.shade200,
 
-              color: Colors.indigo,
+              color: const Color(0xFF3D9974),
 
             ),
 

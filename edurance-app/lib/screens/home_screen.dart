@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+
+
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -17,7 +18,7 @@ class HomeScreen extends StatelessWidget {
             icon: const Icon(Icons.logout, color: Colors.white),
             tooltip: 'Logout',
             onPressed: () async {
-              await FirebaseAuth.instance.signOut();
+              // await FirebaseAuth.instance.signOut();
               if (context.mounted) {
                 Navigator.pushReplacementNamed(context, '/auth');
               }
@@ -89,7 +90,8 @@ class HomeScreen extends StatelessWidget {
               height: 55,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.indigo,
+                  backgroundColor: const Color(0xFF3D9974)
+,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30)),
@@ -120,7 +122,8 @@ class HomeScreen extends StatelessWidget {
               height: 55,
               child: OutlinedButton(
                 style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Colors.indigo, width: 2),
+                  side: const BorderSide(color: const Color(0xFF3D9974)
+, width: 2),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30)),
                 ),
@@ -128,11 +131,13 @@ class HomeScreen extends StatelessWidget {
                 child: const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.assignment_outlined, color: Colors.indigo),
+                    Icon(Icons.assignment_outlined, color: const Color(0xFF3D9974)
+),
                     SizedBox(width: 10),
                     Text("Assessment Test",
                         style:
-                            TextStyle(color: Colors.indigo, fontSize: 18)),
+                            TextStyle(color: const Color(0xFF3D9974)
+, fontSize: 18)),
                   ],
                 ),
               ),
