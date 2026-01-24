@@ -35,7 +35,10 @@ class _LearnScreenState extends State<LearnScreen> {
     });
 
     try {
-      final url = Uri.parse('http://192.168.1.9:3000/api/tutor/chat');
+      final url = Uri.parse(
+  'https://edurance-backend.onrender.com/api/tutor/chat',
+);
+
       
 
 
