@@ -1,116 +1,140 @@
-// ai/tutor/agent.js
+// ai/tutor/agent.js — HARD-GUARDED NCERT TUTOR (NO CONTENT QUESTIONS)
+
 const AIService = require("./ai-service.js");
 const aiService = new AIService();
-const studentKnowledge = new Map();
 
-const encouragements = [
-  "You're a natural at this!",
-  "Keep going, you're doing great!",
-  "That's a brilliant observation!",
-  "I love how you're thinking!",
-  "Spot on! You've got a real spark for science."
+// Fixed NCERT topic order
+const TOPIC_SEQUENCE = [
+  "electric_current",
+  "potential_difference",
+  "resistance",
+  "ohms_law",
+  "ohmic_materials",
+  "circuit_components"
 ];
 
-async function runTutorAgent({ message, session, context }) {
-  const sessionId = session.session_id;
-  const studentName = session.user_name || "young scientist";
+// Session memory
+const studentKnowledge = new Map();
 
-  const cleanContext = context.filter(
-    c => !c.text?.toLowerCase().includes("stick to")
+// Understanding detection
+function isUnderstandingConfirmed(text) {
+  const t = text.toLowerCase().trim();
+  return (
+    t === "yes" ||
+    t === "ok" ||
+    t === "okay" ||
+    t === "got it" ||
+    t === "i understand" ||
+    t === "understood" ||
+    t === "clear"
   );
+}
 
-  
-  // 1. PERSISTENT STATE MANAGEMENT
-  if (!studentKnowledge.has(sessionId)) {
-    studentKnowledge.set(sessionId, { 
-      concepts: {}, 
-      isFirstMessage: true,
-      currentTopicIndex: 0 
-    });
-  }
-  const student = studentKnowledge.get(sessionId);
-  const randomEncouragement = encouragements[Math.floor(Math.random() * encouragements.length)];
+function isNotUnderstood(text) {
+  const t = text.toLowerCase();
+  return (
+    t.includes("no") ||
+    t.includes("confused") ||
+    t.includes("not clear") ||
+    t.includes("dont understand")
+  );
+}
 
-  // 2. CURRICULUM DEFINITION
-  const curriculum = [
-    "Electric current (flow of electrons)",
-    "Potential difference (voltage)",
-    "Resistance",
-    "Ohm’s Law",
-    "Circuit components (cells, bulbs, switches)"
-  ];
-  const currentTopic = curriculum[student.currentTopicIndex];
+async function runTutorAgent({ message, session, context }) {
+  try {
+    const sessionId = session.session_id;
 
-  // 3. ENHANCED SYSTEM PROMPT
-  const systemPrompt = `
-You are Edurance AI, a warm Grade 6 Science teacher. 
-GOAL: Teach Electricity and Circuits. Be a guide, not a quiz bot.
-Each response must start differently from the previous one.
+    // -------------------------------
+    // INIT SESSION
+    // -------------------------------
+    if (!studentKnowledge.has(sessionId)) {
+      studentKnowledge.set(sessionId, {
+        currentTopicIndex: 0
+      });
+    }
 
-STATE DATA:
-- Student Name: ${studentName}
-- Is Onboarding: ${student.isFirstMessage}
-- Current Lesson: ${currentTopic}
+    const student = studentKnowledge.get(sessionId);
 
-RULES:
-1. **NO REPETITION**: If isFirstMessage is false, DO NOT say "Hi/Hope you're doing well" again. Start by acknowledging the student's specific answer: "${message}".
-2. **VALIDATION**: If the student answers (like "battery"), say: "${randomEncouragement} Yes, a battery provides the push!"
-3. **TEACHING OVER TESTING**: Explain the concept deeply. For Grade 6, use the "Water Pipe" analogy. 
-4. **ONBOARDING ONLY**: Use the "Phone/Lightbulb" hook ONLY if isFirstMessage is true. If false, move to explaining HOW the battery works.
-5. **QUESTION RULE**: Only ask "Does that make sense?" or "Want to know how the battery pushes the electricity?" Stop asking quiz questions.
+    // -------------------------------
+    // HANDLE UNDERSTANDING FLOW
+    // -------------------------------
+    if (isUnderstandingConfirmed(message)) {
+      student.currentTopicIndex++;
 
-ANTI-REPETITION RULE (CRITICAL):
-- You must NEVER repeat the same sentence, phrase, or opening line
-  that you have used in any previous response in this session.
-- If you detect similar wording, you MUST rephrase completely.
-- Especially NEVER repeat fallback or redirection sentences.
+      if (student.currentTopicIndex >= TOPIC_SEQUENCE.length) {
+        return {
+          teaching_point:
+            "You have now completed all the NCERT Electricity topics. This concludes the chapter.",
+          question: "",
+          concept_id: "chapter_complete",
+          is_concept_cleared: true
+        };
+      }
 
+      message = `START_NEXT_TOPIC_${TOPIC_SEQUENCE[student.currentTopicIndex]}`;
+    }
 
-STRICT JSON FORMAT:
+    if (isNotUnderstood(message)) {
+      message = `REEXPLAIN_${TOPIC_SEQUENCE[student.currentTopicIndex]}`;
+    }
+
+    const currentTopic = TOPIC_SEQUENCE[student.currentTopicIndex];
+
+    // -------------------------------
+    // SYSTEM PROMPT (CONTENT ONLY)
+    // -------------------------------
+    const systemPrompt = `
+You are Edurance AI, an NCERT Grade 6 Science teacher.
+
+TASK:
+Explain ONLY the following topic clearly and concisely:
+"${currentTopic}"
+
+STRICT RULES:
+- NO questions
+- NO confirmation
+- NO "does this make sense"
+- NO quizzes
+- NO asking definitions
+- Explanation ONLY
+
+Teaching style:
+- NCERT aligned
+- Simple language
+- Short paragraphs
+- Exam-appropriate
+
+Return STRICT JSON:
 {
-  "teaching_point": "Warm acknowledgement of '${message}' + Deep science explanation.",
-  "question": "A gentle check-in or invitation to ask a question.",
-  "concept_id": "current_basics"
+  "teaching_point": "clear explanation only",
+  "concept_id": "${currentTopic}"
 }
 `;
 
-  try {
-    const raw = await aiService.generateTeachingResponse(systemPrompt, message, context);
-    
-    // Cleaning and Parsing logic
-    let res;
-    try {
-        const cleaned = typeof raw === 'string' ? raw.replace(/```json|```/g, "").trim() : raw;
-        res = typeof cleaned === 'string' ? JSON.parse(cleaned) : cleaned;
-    } catch (e) {
-        console.error("JSON Parse Error, using fallback");
-        res = { teaching_point: raw, question: "did you understand ?", concept_id: "fallback" };
-    }
+    const aiResponse = await aiService.generateTeachingResponse(
+      systemPrompt,
+      message,
+      context
+    );
 
-    // 4. UPDATE STATE AFTER SUCCESSFUL RESPONSE
-    if (student.isFirstMessage) {
-        student.isFirstMessage = false; 
-    }
-
-    // Increment progress if they seem to understand
-    const cId = res.concept_id || "basics";
-    student.concepts[cId] = (student.concepts[cId] || 0) + 1;
-    if (student.concepts[cId] >= 3) {
-      student.currentTopicIndex = Math.min(student.currentTopicIndex + 1, curriculum.length - 1);
-    }
-
+    // -------------------------------
+    // 🔒 HARD OVERRIDE (KEY FIX)
+    // -------------------------------
     return {
-      teaching_point: res.teaching_point,
-      question: res.question,
-      concept_id: cId,
-      is_concept_cleared: student.concepts[cId] >= 3
+      teaching_point: aiResponse.teaching_point,
+      question: "Did you understand this?", // 🔥 ONLY allowed question
+      concept_id: currentTopic,
+      is_concept_cleared: false
     };
+
   } catch (error) {
-    console.error("Tutor Agent Error:", error);
+    console.error("❌ Tutor Agent Error:", error.message);
+
     return {
-      teaching_point: "I'm sorry, I lost my train of thought! Let's continue talking about " + currentTopic,
-      question: "Shall we?",
-      concept_id: "error",
+      teaching_point:
+        "Let us restart calmly. We will continue with the NCERT Electricity chapter step by step.",
+      question: "Did you understand this?",
+      concept_id: "fallback",
       is_concept_cleared: false
     };
   }
