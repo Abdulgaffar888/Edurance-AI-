@@ -3,16 +3,26 @@ const express = require('express');
 const cors = require('cors');
 const OpenAI = require("openai");
 const admin = require('firebase-admin');
-const tutorRoutes = require('../ai/tutor/routes'); // ONLY ONCE
+const tutorRoutes = require('../ai/tutor/routes');
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.use(cors());
+app.use(cors({
+  origin: "*",
+  methods: ["GET", "POST"],
+  allowedHeaders: ["Content-Type"],
+}));
+
 app.use(express.json());
 
 // Tutor API
 app.use('/api/tutor', tutorRoutes);
+
+app.listen(port, () => {
+  console.log(`✅ Backend running on port ${port}`);
+});
+
 
 // const openai = new OpenAI({
 //   apiKey: process.env.OPENAI_API_KEY,

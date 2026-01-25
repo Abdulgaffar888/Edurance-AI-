@@ -1,4 +1,4 @@
-// ai/tutor/ai-service.js - REPLACE ENTIRE FILE
+// ai/tutor/ai-service.js - MINIMAL CHANGES (ONLY ADDED LOGS + CLEANING)
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const Groq = require("groq-sdk");
 
@@ -64,7 +64,10 @@ class AIService {
     const response = await result.response;
     const text = response.text();
     
-    console.log("Gemini raw:", text.substring(0, 100));
+    // 🔥 ADDED: Full debug logging
+    console.log("📥 GEMINI FULL RAW RESPONSE:");
+    console.log(text);
+    console.log("=" .repeat(80));
     
     // Extract JSON
     const jsonMatch = text.match(/\{[\s\S]*\}/);
@@ -72,8 +75,20 @@ class AIService {
     
     const parsed = JSON.parse(jsonMatch[0]);
     
+    // 🔥 ADDED: Log parsed response
+    console.log("📦 PARSED RESPONSE:", JSON.stringify(parsed, null, 2));
+    
+    // 🔥 ADDED: Clean teaching_point - remove any questions Gemini sneaks in
+    let cleanTeachingPoint = parsed.teaching_point || "Let's learn about electricity!";
+    cleanTeachingPoint = cleanTeachingPoint
+      .replace(/Did you understand.*?\?/gi, '')
+      .replace(/Do you understand.*?\?/gi, '')
+      .replace(/Is this clear.*?\?/gi, '')
+      .replace(/Are you following.*?\?/gi, '')
+      .trim();
+    
     return {
-      teaching_point: parsed.teaching_point || "Let's learn about electricity!",
+      teaching_point: cleanTeachingPoint,
       question: parsed.question || "What would you like to know?",
       concept_id: parsed.concept_id || "concept_01",
       is_concept_cleared: !!parsed.is_concept_cleared,
