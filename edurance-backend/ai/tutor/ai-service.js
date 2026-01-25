@@ -1,142 +1,139 @@
-// ai/tutor/ai-service.js - MINIMAL CHANGES (ONLY ADDED LOGS + CLEANING)
+// ai/tutor/ai-service.js
 const { GoogleGenerativeAI } = require("@google/generative-ai");
-const Groq = require("groq-sdk");
 
 class AIService {
   constructor() {
-    console.log("🔄 Initializing AI Services...");
-    
-    // Gemini - USE CORRECT MODEL
-    if (process.env.GEMINI_API_KEY) {
-      console.log("🔧 Initializing Gemini");
-      this.geminiAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-      // TRY THESE MODELS (one will work):
-      try {
-        this.geminiModel = this.geminiAI.getGenerativeModel({ 
-          model: "gemini-1.5-flash",  // Try this first
-          generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 200,
-          }
-        });
-        console.log("✅ Gemini model: gemini-1.5-flash");
-      } catch (e) {
-        // Fallback to pro model
-        this.geminiModel = this.geminiAI.getGenerativeModel({ 
-          model: "gemini-1.5-pro",  // Fallback
-          generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 200,
-          }
-        });
-        console.log("✅ Gemini model: gemini-1.5-pro");
-      }
+    console.log("🔄 Initializing AI Service (Gemini only)...");
+
+    if (!process.env.GEMINI_API_KEY) {
+      console.error("❌ GEMINI_API_KEY is missing");
+      return;
     }
 
-    // Groq - USE CORRECT MODEL
-    if (process.env.GROQ_API_KEY) {
-      console.log("🔧 Initializing Groq");
-      this.groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
-    }
-  }
+    this.geminiAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-  async generateTeachingResponse(systemPrompt, userPrompt, context) {
-    // SIMPLE WORKING VERSION - No complex fallbacks
+    // Prefer fast + cheap model
     try {
-      return await this.tryGeminiSimple(systemPrompt, userPrompt);
-    } catch (error) {
-      console.log("Gemini failed, trying Groq...");
-      try {
-        return await this.tryGroqSimple(systemPrompt, userPrompt);
-      } catch (groqError) {
-        console.log("Both APIs failed, using fallback");
-        return this.getSimpleFallback(context);
-      }
+      this.geminiModel = this.geminiAI.getGenerativeModel({
+        model: "gemini-1.5-flash",
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 300,
+        },
+      });
+      console.log("✅ Gemini model loaded: gemini-1.5-flash");
+    } catch (err) {
+      console.error("❌ Failed to initialize Gemini model", err);
+      this.geminiModel = null;
     }
   }
 
-  async tryGeminiSimple(systemPrompt, userPrompt) {
-    if (!this.geminiModel) throw new Error("Gemini not initialized");
-    
-    const fullPrompt = `${systemPrompt}\n\nStudent: ${userPrompt}\n\nReturn JSON only: {"teaching_point":"text","question":"text","concept_id":"id","is_concept_cleared":false}`;
-    
+  // Main entry used by agent.js
+  async generateTeachingResponse(systemPrompt, userPrompt, context = []) {
+    if (!this.geminiModel) {
+      console.error("❌ Gemini model not initialized, using fallback");
+      return this.getSimpleFallback(context);
+    }
+
+    try {
+      return await this.tryGemini(systemPrompt, userPrompt);
+    } catch (err) {
+      console.error("❌ Gemini failed completely:", err.message);
+      return this.getSimpleFallback(context);
+    }
+  }
+
+  async tryGemini(systemPrompt, userPrompt) {
+    const fullPrompt = `
+${systemPrompt}
+
+Student says:
+${userPrompt}
+
+IMPORTANT:
+- Respond ONLY in valid JSON
+- No markdown
+- No explanations outside JSON
+
+JSON format:
+{
+  "teaching_point": "text",
+  "question": "text",
+  "concept_id": "id",
+  "is_concept_cleared": false
+}
+`;
+
     const result = await this.geminiModel.generateContent(fullPrompt);
     const response = await result.response;
     const text = response.text();
-    
-    // 🔥 ADDED: Full debug logging
-    console.log("📥 GEMINI FULL RAW RESPONSE:");
+
+    console.log("📥 GEMINI RAW RESPONSE:");
     console.log(text);
-    console.log("=" .repeat(80));
-    
-    // Extract JSON
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error("No JSON in response");
-    
-    const parsed = JSON.parse(jsonMatch[0]);
-    
-    // 🔥 ADDED: Log parsed response
-    console.log("📦 PARSED RESPONSE:", JSON.stringify(parsed, null, 2));
-    
-    // 🔥 ADDED: Clean teaching_point - remove any questions Gemini sneaks in
-    let cleanTeachingPoint = parsed.teaching_point || "Let's learn about electricity!";
-    cleanTeachingPoint = cleanTeachingPoint
-      .replace(/Did you understand.*?\?/gi, '')
-      .replace(/Do you understand.*?\?/gi, '')
-      .replace(/Is this clear.*?\?/gi, '')
-      .replace(/Are you following.*?\?/gi, '')
+    console.log("=".repeat(80));
+
+    // 🔒 Robust JSON extraction
+    let parsed;
+    try {
+      const start = text.indexOf("{");
+      const end = text.lastIndexOf("}");
+
+      if (start === -1 || end === -1) {
+        throw new Error("No JSON found in Gemini response");
+      }
+
+      const jsonString = text.slice(start, end + 1);
+      parsed = JSON.parse(jsonString);
+    } catch (parseErr) {
+      console.error("❌ JSON PARSE FAILED");
+      console.error("RAW TEXT:", text);
+      throw parseErr;
+    }
+
+    console.log("📦 PARSED GEMINI JSON:", parsed);
+
+    // Clean teaching text (teacher should not ask meta questions)
+    let teaching = parsed.teaching_point || "";
+    teaching = teaching
+      .replace(/did you understand.*?\?/gi, "")
+      .replace(/do you understand.*?\?/gi, "")
+      .replace(/is this clear.*?\?/gi, "")
+      .replace(/are you following.*?\?/gi, "")
       .trim();
-    
+
+    if (!teaching) {
+      throw new Error("Empty teaching_point after cleaning");
+    }
+
     return {
-      teaching_point: cleanTeachingPoint,
-      question: parsed.question || "What would you like to know?",
-      concept_id: parsed.concept_id || "concept_01",
+      teaching_point: teaching,
+      question:
+        typeof parsed.question === "string" && parsed.question.trim().length > 0
+          ? parsed.question
+          : "What would you like to understand next?",
+      concept_id:
+        typeof parsed.concept_id === "string"
+          ? parsed.concept_id
+          : "electric_current",
       is_concept_cleared: !!parsed.is_concept_cleared,
-      _meta: { source: 'gemini' }
+      _meta: { source: "gemini" },
     };
   }
 
-  async tryGroqSimple(systemPrompt, userPrompt) {
-    if (!this.groq) throw new Error("Groq not initialized");
-    
-    const completion = await this.groq.chat.completions.create({
-      messages: [
-        { 
-          role: "system", 
-          content: systemPrompt + "\n\nReturn ONLY JSON with teaching_point, question, concept_id, is_concept_cleared" 
-        },
-        { role: "user", content: userPrompt }
-      ],
-      model: "llama-3.1-8b-instant",  // CORRECT MODEL
-      temperature: 0.7,
-      max_tokens: 200,
-      response_format: { type: "json_object" }
-    });
+  // Absolute last-resort fallback (never crashes UI)
+  getSimpleFallback(context = []) {
+    console.warn("⚠️ Using simple fallback response");
 
-    const content = completion.choices[0]?.message?.content;
-    if (!content) throw new Error("Empty response");
-    
-    console.log("Groq raw:", content.substring(0, 100));
-    
-    const parsed = JSON.parse(content);
-    
-    return {
-      teaching_point: parsed.teaching_point || "Great question!",
-      question: parsed.question || "Tell me more",
-      concept_id: parsed.concept_id || "concept_01",
-      is_concept_cleared: !!parsed.is_concept_cleared,
-      _meta: { source: 'groq' }
-    };
-  }
+    const chunk = context[0];
 
-  getSimpleFallback(context) {
-    const chunk = context?.[0];
     return {
-      teaching_point: chunk?.text ? `Let's explore: ${chunk.text.substring(0, 80)}...` : "Welcome to electricity circuits!",
-      question: "What aspect interests you most?",
-      concept_id: chunk?.id || "fallback_01",
+      teaching_point: chunk?.text
+        ? chunk.text
+        : "Let us start learning Electricity step by step. First, we will understand what electric current means.",
+      question: "Shall we begin?",
+      concept_id: chunk?.id || "electric_current",
       is_concept_cleared: false,
-      _meta: { source: 'fallback' }
+      _meta: { source: "fallback" },
     };
   }
 }

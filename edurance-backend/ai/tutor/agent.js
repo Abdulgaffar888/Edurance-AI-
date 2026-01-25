@@ -180,9 +180,19 @@ DO NOT include questions in teaching_point.
         context
       );
 
+      if (!aiResponse || typeof aiResponse.teaching_point !== "string" || aiResponse.teaching_point.trim().length === 0) {
+        return {
+          teaching_point:
+            "Let us start learning Electricity step by step. First, we will understand what electric current means.",
+          question: "Shall we begin with electric current?",
+          concept_id: "electric_current",
+          is_concept_cleared: false
+        };
+      }
+
       return {
-        teaching_point: `**[${requestedMarks} Marks Answer]**\n\n${aiResponse.teaching_point}`,
-        question: "Would you like me to explain any part in more detail?",
+        teaching_point: aiResponse.teaching_point,
+        question: "Can you tell me what part you want to understand better?",
         concept_id: currentTopic,
         is_concept_cleared: false
       };
@@ -206,7 +216,8 @@ DO NOT include questions in teaching_point.
       }
 
       const nextTopic = TOPIC_SEQUENCE[student.currentTopicIndex];
-      message = `START_EXPLAINING:${nextTopic}`;
+      student.phase = "new_topic";
+
     }
 
     if (isNotUnderstood(message)) {

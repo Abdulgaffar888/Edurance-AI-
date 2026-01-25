@@ -77,13 +77,14 @@ router.post("/chat", async (req, res) => {
     const session = getOrCreateSession(session_id.trim());
     const cleared = session?.clearedConcepts || [];
 
-    const rag = await queryRag({
-      userMessage: message,
-      clearedConceptIds: cleared,
-      topK: 1,
-    });
+    // const rag = await queryRag({
+    //   userMessage: message,
+    //   clearedConceptIds: cleared,
+    //   topK: 1,
+    // });
+    const context = [];
 
-    const context = rag?.chunks || [];
+    // const context = rag?.chunks || [];
     
     console.log(`📚 Context found: ${context.length} chunks`);
     if (context.length > 0) {
@@ -116,7 +117,7 @@ router.post("/chat", async (req, res) => {
     
     return res.status(200).json(
       ensureSchemaResponse({
-        teaching_point: "That's interesting, but let's stick to our NCERT circuits chapter!",
+        teaching_point: "Let's continue learning Electricity step by step.",
         question: "Can you tell me what makes a circuit complete?",
         concept_id: "circuit_01",
         is_concept_cleared: false,
