@@ -21,16 +21,15 @@ class _LearnScreenState extends State<LearnScreen> {
   void initState() {
     super.initState();
     sessionId = SessionManager.sessionId ?? "guest_${DateTime.now().millisecondsSinceEpoch}";
-    _sendMessage("START_LESSON_ONBOARDING");
+    
   }
 
   Future<void> _sendMessage(String userText) async {
     if (userText.trim().isEmpty) return;
 
     setState(() {
-      if (_messages.isNotEmpty) {
-        _messages.add({"role": "user", "content": userText});
-      }
+      _messages.add({"role": "user", "content": userText});
+
       _isLoading = true;
     });
 
