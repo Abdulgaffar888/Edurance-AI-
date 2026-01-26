@@ -1,9 +1,7 @@
 const express = require("express");
-const { generateTeacherReply } = require("../services/geminiTeacher");
+const { generateTeacherReply } = require("../services/teacherAI");
 
 const router = express.Router();
-
-// In-memory per-topic session store
 const sessions = new Map();
 
 router.post("/", async (req, res) => {
@@ -28,7 +26,6 @@ router.post("/", async (req, res) => {
 
   const session = sessions.get(sessionKey);
 
-  // Store student message if present
   if (message && message.trim().length > 0) {
     session.history.push({
       role: "student",
@@ -52,7 +49,6 @@ router.post("/", async (req, res) => {
       reply,
       waitingForAnswer: true,
     });
-
   } catch (err) {
     console.error("❌ Teach API failed:");
     console.error(err);

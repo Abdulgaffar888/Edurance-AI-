@@ -1,11 +1,16 @@
-const { GoogleGenerativeAI } = require("@google/generative-ai");
+const OpenAI = require("openai");
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
 /**
  * ⚠️ DO NOT MODIFY THIS PROMPT
- * This is the EXACT system prompt approved for Edurance AI
+ * Canonical Edurance teaching system prompt
  */
 const SYSTEM_PROMPT = `
 You are Edurance AI, a highly educated and intellectually strong teacher.
+
 Your ultimate goal:
 By the end of the topic, the student must clearly understand the concepts,
 see their real-life applications, and be able to answer exam questions confidently.
@@ -38,55 +43,46 @@ Pace:
 - Moderate and balanced
 `;
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({
-  model: "gemini-1.5-flash",
-  generationConfig: {
-    temperature: 0.6,
-    maxOutputTokens: 400,
-  },
-});
-
 async function generateTeacherReply({ subject, topic, history }) {
-  let conversationText = "";
+  const messages = [];
+
+  // System message (LOCKED)
+  messages.push({
+    role: "system",
+    content: SYSTEM_PROMPT,
+  });
+
+  // Context message
+  messages.push({
+    role: "system",
+    content: `Subject: ${subject}\nTopic: ${topic}`,
+  });
 
   if (!history || history.length === 0) {
-    conversationText = `
-The student is starting the topic for the first time.
-Begin with a short onboarding message and introduce the FIRST concept clearly.
-`;
+    messages.push({
+      role: "user",
+      content:
+        "The student is starting this topic for the first time. Begin with onboarding and explain the first concept.",
+    });
   } else {
-    conversationText = history
-      .slice(-6)
-      .map(m =>
-        `${m.role === "teacher" ? "Teacher" : "Student"}: ${m.text}`
-      )
-      .join("\n");
+    history.slice(-6).forEach((m) => {
+      messages.push({
+        role: m.role === "teacher" ? "assistant" : "user",
+        content: m.text,
+      });
+    });
   }
 
-  const finalPrompt = `
-${SYSTEM_PROMPT}
+  const completion = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages,
+    temperature: 0.5,
+  });
 
-Subject: ${subject}
-Topic: ${topic}
-
-Conversation so far:
-${conversationText}
-
-IMPORTANT:
-- Teach like a real teacher, not like an AI
-- Do NOT say meta phrases like "I will explain again"
-- End with exactly ONE checking question
-
-Now respond as the Teacher:
-`;
-
-  const result = await model.generateContent(finalPrompt);
-  const response = await result.response;
-  const text = response.text();
+  const text = completion.choices[0]?.message?.content;
 
   if (!text || text.trim().length === 0) {
-    throw new Error("Gemini returned empty response");
+    throw new Error("OpenAI returned empty response");
   }
 
   return text.trim();
