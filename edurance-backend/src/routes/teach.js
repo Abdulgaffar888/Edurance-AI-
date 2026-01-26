@@ -50,14 +50,16 @@ router.post("/", async (req, res) => {
       waitingForAnswer: true,
     });
   } catch (err) {
-    console.error("❌ Teach API failed:");
+    console.error("❌ OpenAI call failed FULL ERROR:");
     console.error(err);
-
-    res.status(500).json({
-      reply: `ERROR FROM AI SERVICE: ${err.message || err.toString()}`,
-      waitingForAnswer: true,
-    });
+  
+    throw new Error(
+      err?.message ||
+      err?.response?.data?.error?.message ||
+      JSON.stringify(err)
+    );
   }
+  
 });
 
 module.exports = router;
