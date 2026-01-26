@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart';
-import 'screens/home_screen.dart';
-import 'screens/diagnostic_screen.dart';
-import 'screens/learn_screen.dart';
-import 'screens/auth_screen.dart';
-import 'screens/progress_screen.dart';
+import 'screens/subject_selection_screen.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(const EduranceApp());
 }
 
-class MyApp extends StatelessWidget {
-  static const Color brandColor = Color(0xFF3D9974); // #3d9974
+class EduranceApp extends StatelessWidget {
+  const EduranceApp({super.key});
+
+  static const Color brandColor = Color(0xFF3D9974);
 
   @override
   Widget build(BuildContext context) {
@@ -24,21 +22,8 @@ class MyApp extends StatelessWidget {
           backgroundColor: brandColor,
           foregroundColor: Colors.white,
         ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: brandColor,
-            foregroundColor: Colors.white,
-          ),
-        ),
       ),
-      home: AuthScreen(),
-      routes: {
-        '/auth': (context) => AuthScreen(),
-        '/home': (context) => HomeScreen(),
-        '/diagnostic': (context) => DiagnosticScreen(),
-        '/learn': (context) => LearnScreen(),
-        '/progress': (context) => ProgressScreen(),
-      },
+      home: const SubjectSelectionScreen(),
     );
   }
 }
