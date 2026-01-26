@@ -1,14 +1,18 @@
 const express = require("express");
-const GeminiTeacher = require("../services/geminiTeacher");
+const { generateTeacherReply } = require("../services/geminiTeacher");
 
 const router = express.Router();
+
+// In-memory per-topic session store
 const sessions = new Map();
 
 router.post("/", async (req, res) => {
   const { subject, topic, message } = req.body;
 
   if (!subject || !topic) {
-    return res.status(400).json({ error: "Subject and topic are required" });
+    return res.status(400).json({
+      error: "Subject and topic are required",
+    });
   }
 
   const sessionKey = `${subject}::${topic}`;
@@ -17,48 +21,47 @@ router.post("/", async (req, res) => {
     sessions.set(sessionKey, {
       subject,
       topic,
-      messages: [],
+      history: [],
       startedAt: Date.now(),
     });
   }
 
   const session = sessions.get(sessionKey);
 
-  // If user sends a message, add it
+  // Store student message if present
   if (message && message.trim().length > 0) {
-    session.messages.push({
+    session.history.push({
       role: "student",
       text: message.trim(),
     });
   }
 
   try {
-    const aiReply = await GeminiTeacher.generate({
+    const reply = await generateTeacherReply({
       subject,
       topic,
-      history: session.messages,
+      history: session.history,
     });
 
-    session.messages.push({
+    session.history.push({
       role: "teacher",
-      text: aiReply,
+      text: reply,
     });
 
     res.json({
-      reply: aiReply,
+      reply,
       waitingForAnswer: true,
     });
 
-  }catch (err) {
-    console.error("❌ Teach API failed FULL ERROR:");
+  } catch (err) {
+    console.error("❌ Teach API failed:");
     console.error(err);
-  
+
     res.status(500).json({
       reply: `ERROR FROM AI SERVICE: ${err.message || err.toString()}`,
       waitingForAnswer: true,
     });
   }
-  
 });
 
 module.exports = router;
