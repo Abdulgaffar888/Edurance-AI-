@@ -1,12 +1,11 @@
 const OpenAI = require("openai");
 
-const openai = new OpenAI({
+const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
 /**
- * ⚠️ DO NOT MODIFY THIS PROMPT
- * Canonical Edurance teaching system prompt
+ * DO NOT MODIFY THIS PROMPT
  */
 const SYSTEM_PROMPT = `
 You are Edurance AI, a highly educated and intellectually strong teacher.
@@ -44,50 +43,44 @@ Pace:
 `;
 
 async function generateTeacherReply({ subject, topic, history }) {
-  const messages = [];
+  try {
+    const messages = [
+      { role: "system", content: SYSTEM_PROMPT },
+      { role: "system", content: `Subject: ${subject}\nTopic: ${topic}` },
+    ];
 
-  // System message (LOCKED)
-  messages.push({
-    role: "system",
-    content: SYSTEM_PROMPT,
-  });
-
-  // Context message
-  messages.push({
-    role: "system",
-    content: `Subject: ${subject}\nTopic: ${topic}`,
-  });
-
-  if (!history || history.length === 0) {
-    messages.push({
-      role: "user",
-      content:
-        "The student is starting this topic for the first time. Begin with onboarding and explain the first concept.",
-    });
-  } else {
-    history.slice(-6).forEach((m) => {
+    if (!history || history.length === 0) {
       messages.push({
-        role: m.role === "teacher" ? "assistant" : "user",
-        content: m.text,
+        role: "user",
+        content:
+          "The student is starting this topic for the first time. Begin with onboarding and explain the first concept.",
       });
+    } else {
+      history.slice(-6).forEach((m) => {
+        messages.push({
+          role: m.role === "teacher" ? "assistant" : "user",
+          content: m.text,
+        });
+      });
+    }
+
+    const response = await client.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages,
+      temperature: 0.5,
     });
+
+    const text = response.choices?.[0]?.message?.content;
+
+    if (!text) {
+      throw new Error("Empty response from OpenAI");
+    }
+
+    return text.trim();
+  } catch (err) {
+    console.error("❌ OpenAI call failed:", err);
+    throw new Error("Connection error.");
   }
-
-  const completion = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
-    messages,
-    temperature: 0.5,
-  });
-
-  const text = completion.choices[0]?.message?.content;
-
-  if (!text || text.trim().length === 0) {
-    throw new Error("OpenAI returned empty response");
-  }
-
-  return text.trim();
 }
 
-module.exports = {
-  generateTeacherReply,
-};
+module.exports = { generateTeacherReply };
