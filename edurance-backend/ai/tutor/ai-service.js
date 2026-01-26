@@ -130,7 +130,7 @@ JSON format:
       teaching_point: chunk?.text
         ? chunk.text
         : "Let us start learning Electricity step by step. First, we will understand what electric current means.",
-      question: "Shall we begin?",
+      question: "Lets Begin shall we?",
       concept_id: chunk?.id || "electric_current",
       is_concept_cleared: false,
       _meta: { source: "fallback" },
