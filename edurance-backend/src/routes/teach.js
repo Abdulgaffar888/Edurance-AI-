@@ -49,14 +49,16 @@ router.post("/", async (req, res) => {
       waitingForAnswer: true,
     });
 
-  } catch (err) {
-    console.error("❌ Teach API failed:", err.message);
+  }catch (err) {
+    console.error("❌ Teach API failed FULL ERROR:");
+    console.error(err);
+  
     res.status(500).json({
-      reply:
-        "Let us pause for a moment. I will explain this concept again clearly.",
+      reply: `ERROR FROM AI SERVICE: ${err.message || err.toString()}`,
       waitingForAnswer: true,
     });
   }
+  
 });
 
 module.exports = router;
