@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
+    "axios": "*",
     "openai": "6.16.0"
   },
   "scripts": {

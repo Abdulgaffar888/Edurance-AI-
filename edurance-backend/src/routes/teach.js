@@ -1,3 +1,5 @@
+console.log("🔑 OPENROUTER KEY PRESENT:", !!process.env.OPENROUTER_API_KEY);
+
 const express = require("express");
 const { generateTeacherReply } = require("../services/teacherAI");
 
@@ -50,16 +52,14 @@ router.post("/", async (req, res) => {
       waitingForAnswer: true,
     });
   } catch (err) {
-    console.error("❌ OpenAI call failed FULL ERROR:");
+    console.error("❌ Teach API failed:");
     console.error(err);
-  
-    throw new Error(
-      err?.message ||
-      err?.response?.data?.error?.message ||
-      JSON.stringify(err)
-    );
+
+    res.status(500).json({
+      reply: `ERROR FROM AI SERVICE: ${err.message}`,
+      waitingForAnswer: true,
+    });
   }
-  
 });
 
 module.exports = router;

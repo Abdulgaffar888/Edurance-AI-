@@ -1,11 +1,8 @@
-const OpenAI = require("openai");
-
-const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const axios = require("axios");
 
 /**
- * DO NOT MODIFY THIS PROMPT
+ * ⚠️ DO NOT MODIFY THIS PROMPT
+ * Canonical Edurance teaching system prompt
  */
 const SYSTEM_PROMPT = `
 You are Edurance AI, a highly educated and intellectually strong teacher.
@@ -42,45 +39,77 @@ Pace:
 - Moderate and balanced
 `;
 
-async function generateTeacherReply({ subject, topic, history }) {
-  try {
-    const messages = [
-      { role: "system", content: SYSTEM_PROMPT },
-      { role: "system", content: `Subject: ${subject}\nTopic: ${topic}` },
-    ];
+const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 
-    if (!history || history.length === 0) {
-      messages.push({
-        role: "user",
-        content:
-          "The student is starting this topic for the first time. Begin with onboarding and explain the first concept.",
-      });
-    } else {
-      history.slice(-6).forEach((m) => {
-        messages.push({
-          role: m.role === "teacher" ? "assistant" : "user",
-          content: m.text,
-        });
-      });
-    }
+// model priority list
+const MODELS = [
+  "nvidia/nemotron-nano-9b-v2:free",
+  "google/gemma-3-27b-it:free",
+];
 
-    const response = await client.chat.completions.create({
-      model: "gpt-4o-mini",
+async function callModel(model, messages) {
+  const res = await axios.post(
+    OPENROUTER_URL,
+    {
+      model,
       messages,
       temperature: 0.5,
-    });
-
-    const text = response.choices?.[0]?.message?.content;
-
-    if (!text) {
-      throw new Error("Empty response from OpenAI");
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://edurance.ai",
+        "X-Title": "Edurance AI Tutor",
+      },
+      timeout: 20000,
     }
+  );
 
-    return text.trim();
-  } catch (err) {
-    console.error("❌ OpenAI call failed:", err);
-    throw new Error("Connection error.");
+  return res.data?.choices?.[0]?.message?.content;
+}
+
+async function generateTeacherReply({ subject, topic, history }) {
+  const messages = [
+    { role: "system", content: SYSTEM_PROMPT },
+    { role: "system", content: `Subject: ${subject}\nTopic: ${topic}` },
+  ];
+
+  if (!history || history.length === 0) {
+    messages.push({
+      role: "user",
+      content:
+        "The student is starting this topic for the first time. Begin with onboarding and explain the first concept.",
+    });
+  } else {
+    history.slice(-6).forEach((m) => {
+      messages.push({
+        role: m.role === "teacher" ? "assistant" : "user",
+        content: m.text,
+      });
+    });
   }
+
+  let lastError = null;
+
+  for (const model of MODELS) {
+    try {
+      const text = await callModel(model, messages);
+
+      if (text && text.trim().length > 0) {
+        return text.trim();
+      }
+    } catch (err) {
+      console.error(`❌ Model failed: ${model}`);
+      console.error(err?.response?.data || err.message);
+      lastError = err;
+    }
+  }
+
+  throw new Error(
+    lastError?.response?.data?.error?.message ||
+      "All models failed to respond"
+  );
 }
 
 module.exports = { generateTeacherReply };
