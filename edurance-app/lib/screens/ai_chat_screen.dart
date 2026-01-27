@@ -27,10 +27,10 @@ class _AIChatScreenState extends State<AIChatScreen> {
   @override
   void initState() {
     super.initState();
-    _startTopic();
+    _startConversation();
   }
 
-  Future<void> _startTopic() async {
+  Future<void> _startConversation() async {
     await _sendMessage(null);
   }
 
@@ -41,7 +41,7 @@ class _AIChatScreenState extends State<AIChatScreen> {
       _messages.add({"role": "student", "text": text});
     }
 
-    final response = await http.post(
+    final res = await http.post(
       Uri.parse(backendUrl),
       headers: {"Content-Type": "application/json"},
       body: jsonEncode({
@@ -51,9 +51,8 @@ class _AIChatScreenState extends State<AIChatScreen> {
       }),
     );
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-
+    if (res.statusCode == 200) {
+      final data = jsonDecode(res.body);
       _messages.add({
         "role": "teacher",
         "text": data["reply"] ?? "No response",
@@ -73,7 +72,7 @@ class _AIChatScreenState extends State<AIChatScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("${widget.subject} • ${widget.topic}"),
+        title: Text(widget.subject),
       ),
       body: Column(
         children: [

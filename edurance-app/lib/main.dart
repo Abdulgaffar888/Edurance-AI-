@@ -8,20 +8,14 @@ void main() {
 class EduranceApp extends StatelessWidget {
   const EduranceApp({super.key});
 
-  static const Color brandColor = Color(0xFF3D9974);
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Edurance AI',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        primaryColor: brandColor,
-        scaffoldBackgroundColor: Colors.white,
-        appBarTheme: const AppBarTheme(
-          backgroundColor: brandColor,
-          foregroundColor: Colors.white,
-        ),
+        useMaterial3: true,
+        colorSchemeSeed: Colors.green,
       ),
       home: const SubjectSelectionScreen(),
     );
