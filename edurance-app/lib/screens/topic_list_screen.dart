@@ -5,7 +5,7 @@ class TopicListScreen extends StatelessWidget {
   final String subject;
   const TopicListScreen({super.key, required this.subject});
 
-  static const topics = {
+  static const Map<String, List<String>> topics = {
    'Mathematics (Class 10 NCERT)': [
     'Real Numbers - Chapter 1 (Euclid\'s Division Lemma, HCF, LCM, Irrational Numbers)',
     'Sets - Chapter 2 (Venn Diagrams, Union, Intersection, Complement, De Morgan\'s Laws)',
@@ -49,32 +49,39 @@ class TopicListScreen extends StatelessWidget {
   ],
 };
 
-  @override
+   @override
   Widget build(BuildContext context) {
-    final list = topics[subject] ?? [];
+    final list = topics[subject];
 
     return Scaffold(
       appBar: AppBar(title: Text(subject)),
-      body: ListView.builder(
-        itemCount: list.length,
-        itemBuilder: (_, i) {
-          return ListTile(
-            title: Text(list[i]),
-            trailing: const Icon(Icons.arrow_forward),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => AIChatScreen(
-                    subject: subject,
-                    topic: list[i],
-                  ),
-                ),
-              );
-            },
-          );
-        },
-      ),
+      body: list == null
+          ? const Center(
+              child: Text(
+                'No topics found for this subject',
+                style: TextStyle(fontSize: 16),
+              ),
+            )
+          : ListView.builder(
+              itemCount: list.length,
+              itemBuilder: (_, i) {
+                return ListTile(
+                  title: Text(list[i]),
+                  trailing: const Icon(Icons.arrow_forward),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => AIChatScreen(
+                          subject: subject,
+                          topic: list[i],
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
     );
   }
 }

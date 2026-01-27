@@ -27,7 +27,8 @@ class SubjectSelectionScreen extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => TopicListScreen(subject: s['name'] as String),
+                    builder: (_) =>
+                        TopicListScreen(subject: s['name'] as String),
                   ),
                 );
               },

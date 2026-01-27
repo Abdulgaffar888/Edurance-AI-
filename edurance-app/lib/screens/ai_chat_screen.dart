@@ -41,26 +41,33 @@ class _AIChatScreenState extends State<AIChatScreen> {
       _messages.add({"role": "student", "text": text});
     }
 
-    final res = await http.post(
-      Uri.parse(backendUrl),
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({
-        "subject": widget.subject,
-        "topic": widget.topic,
-        "message": text,
-      }),
-    );
+    try {
+      final res = await http.post(
+        Uri.parse(backendUrl),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "subject": widget.subject,
+          "topic": widget.topic,
+          "message": text,
+        }),
+      );
 
-    if (res.statusCode == 200) {
-      final data = jsonDecode(res.body);
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        _messages.add({
+          "role": "teacher",
+          "text": data["reply"] ?? "No response",
+        });
+      } else {
+        _messages.add({
+          "role": "teacher",
+          "text": "Server error (${res.statusCode}).",
+        });
+      }
+    } catch (e) {
       _messages.add({
         "role": "teacher",
-        "text": data["reply"] ?? "No response",
-      });
-    } else {
-      _messages.add({
-        "role": "teacher",
-        "text": "Server error. Please try again.",
+        "text": "Network error. Please try again.",
       });
     }
 
@@ -71,16 +78,14 @@ class _AIChatScreenState extends State<AIChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.subject),
-      ),
+      appBar: AppBar(title: Text(widget.topic)),
       body: Column(
         children: [
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.all(12),
               itemCount: _messages.length,
-              itemBuilder: (context, index) {
+              itemBuilder: (_, index) {
                 final msg = _messages[index];
                 final isStudent = msg["role"] == "student";
 
@@ -113,13 +118,13 @@ class _AIChatScreenState extends State<AIChatScreen> {
                     decoration: const InputDecoration(
                       hintText: "Type your answer...",
                     ),
-                    onSubmitted: (v) => _sendMessage(v),
+                    onSubmitted: _sendMessage,
                   ),
                 ),
                 IconButton(
                   icon: const Icon(Icons.send),
                   onPressed: () => _sendMessage(_controller.text),
-                )
+                ),
               ],
             ),
           ),
