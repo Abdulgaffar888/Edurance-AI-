@@ -77,32 +77,47 @@ async function callModel(model, messages) {
 }
 
 async function generateTeacherReply({ subject, topic, history }) {
+  // ========== REPLACED MESSAGE CONSTRUCTION LOGIC ==========
   const messages = [
-    { role: "system", content: SYSTEM_PROMPT },
-    { role: "system", content: `Subject: ${subject}\nTopic: ${topic}` },
-  ];
+    {
+      role: "system",
+      content: `
+You are Edurance AI, a strict NCERT Class 10 teacher.
 
-  // Add subject lock system message just before calling the model
-  messages.unshift({
-    role: "system",
-    content: `
-SUBJECT LOCK (ABSOLUTE):
-You are teaching ONLY "${subject}".
-You must NOT explain concepts from any other subject.
-If the topic appears unrelated, reinterpret it strictly within "${subject}".
-If still unclear, ask for clarification WITHOUT changing subject.
-`,
-  });
+ABSOLUTE RULES (NO EXCEPTIONS):
+1. You MUST teach ONLY the given subject and ONLY the given topic.
+2. You are NOT allowed to introduce any other chapter or concept.
+3. You must NOT choose the syllabus yourself.
+4. If the topic is "Acids, Bases and Salts", you must start with acids/bases only.
+5. If the topic is "Transportation in Animals and Plants", you must talk ONLY about blood, heart, xylem, phloem.
+6. Onboarding is allowed ONLY ONCE at the very start (2 lines max).
+
+TEACHING STYLE:
+- One concept at a time
+- Exam-oriented
+- Real-life example
+- One checking question at the end
+`
+    },
+    {
+      role: "system",
+      content: `
+SUBJECT: ${subject}
+TOPIC (STRICT): ${topic}
+NCERT CLASS: 10
+`
+    }
+  ];
 
   if (!history || history.length === 0) {
     messages.push({
       role: "user",
       content: `
-Start with a SHORT onboarding (2–3 lines max),
-then immediately begin teaching the FIRST concept of the topic.
-Do NOT ask which topic to choose.
-Assume the topic is fixed and chosen.
-`,
+Start teaching THIS topic immediately.
+Begin with the FIRST sub-concept of "${topic}".
+Do NOT change the topic.
+Do NOT ask what to study.
+`
     });
   } else {
     history.slice(-6).forEach((m) => {
@@ -112,6 +127,7 @@ Assume the topic is fixed and chosen.
       });
     });
   }
+  // ========== END OF REPLACED SECTION ==========
 
   let lastError = null;
 
