@@ -82,18 +82,29 @@ async function generateTeacherReply({ subject, topic, history }) {
     { role: "system", content: `Subject: ${subject}\nTopic: ${topic}` },
   ];
 
+  // Add subject lock system message just before calling the model
+  messages.unshift({
+    role: "system",
+    content: `
+SUBJECT LOCK (ABSOLUTE):
+You are teaching ONLY "${subject}".
+You must NOT explain concepts from any other subject.
+If the topic appears unrelated, reinterpret it strictly within "${subject}".
+If still unclear, ask for clarification WITHOUT changing subject.
+`,
+  });
+
   if (!history || history.length === 0) {
     messages.push({
       role: "user",
       content: `
-  Start with a SHORT onboarding (2–3 lines max),
-  then immediately begin teaching the FIRST concept of the topic.
-  Do NOT ask which topic to choose.
-  Assume the topic is fixed and chosen.
-  `,
+Start with a SHORT onboarding (2–3 lines max),
+then immediately begin teaching the FIRST concept of the topic.
+Do NOT ask which topic to choose.
+Assume the topic is fixed and chosen.
+`,
     });
-  }
-   else {
+  } else {
     history.slice(-6).forEach((m) => {
       messages.push({
         role: m.role === "teacher" ? "assistant" : "user",
