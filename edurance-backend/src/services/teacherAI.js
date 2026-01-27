@@ -78,10 +78,15 @@ async function generateTeacherReply({ subject, topic, history }) {
   if (!history || history.length === 0) {
     messages.push({
       role: "user",
-      content:
-        "The student is starting this topic for the first time. Begin with onboarding and explain the first concept.",
+      content: `
+  Start with a SHORT onboarding (2–3 lines max),
+  then immediately begin teaching the FIRST concept of the topic.
+  Do NOT ask which topic to choose.
+  Assume the topic is fixed and chosen.
+  `,
     });
-  } else {
+  }
+   else {
     history.slice(-6).forEach((m) => {
       messages.push({
         role: m.role === "teacher" ? "assistant" : "user",
