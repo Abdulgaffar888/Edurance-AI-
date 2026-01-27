@@ -1,75 +1,106 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
-import '../services/api_service.dart';
-
+import 'package:http/http.dart' as http;
 
 class AIChatScreen extends StatefulWidget {
   final String subject;
   final String topic;
 
-  const AIChatScreen({super.key, required this.subject, required this.topic});
+  const AIChatScreen({
+    super.key,
+    required this.subject,
+    required this.topic,
+  });
 
   @override
   State<AIChatScreen> createState() => _AIChatScreenState();
 }
 
 class _AIChatScreenState extends State<AIChatScreen> {
-  final _controller = TextEditingController();
   final List<Map<String, String>> _messages = [];
+  final TextEditingController _controller = TextEditingController();
   bool _loading = false;
+
+  static const String backendUrl =
+      "https://edurance-ai.onrender.com/api/teach";
 
   @override
   void initState() {
     super.initState();
-    _startTeaching();
+    _startTopic();
   }
 
-  Future<void> _startTeaching() async {
-    _messages.add({
-      'role': 'user',
-      'text': 'Start teaching ${widget.topic} from basics.'
-    });
-    await _send();
+  Future<void> _startTopic() async {
+    await _sendMessage(null);
   }
 
-  Future<void> _send() async {
+  Future<void> _sendMessage(String? text) async {
     setState(() => _loading = true);
-    final reply = await GeminiService.sendMessage(_messages);
-    setState(() {
-      _messages.add({'role': 'ai', 'text': reply});
-      _loading = false;
-    });
+
+    if (text != null && text.trim().isNotEmpty) {
+      _messages.add({"role": "student", "text": text});
+    }
+
+    final response = await http.post(
+      Uri.parse(backendUrl),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({
+        "subject": widget.subject,
+        "topic": widget.topic,
+        "message": text,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+
+      _messages.add({
+        "role": "teacher",
+        "text": data["reply"] ?? "No response",
+      });
+    } else {
+      _messages.add({
+        "role": "teacher",
+        "text": "Server error. Please try again.",
+      });
+    }
+
+    setState(() => _loading = false);
+    _controller.clear();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.topic)),
+      appBar: AppBar(
+        title: Text("${widget.subject} • ${widget.topic}"),
+      ),
       body: Column(
         children: [
           Expanded(
-            child: ListView(
+            child: ListView.builder(
               padding: const EdgeInsets.all(12),
-              children: _messages.map((m) {
-                final isUser = m['role'] == 'user';
+              itemCount: _messages.length,
+              itemBuilder: (context, index) {
+                final msg = _messages[index];
+                final isStudent = msg["role"] == "student";
+
                 return Align(
                   alignment:
-                      isUser ? Alignment.centerRight : Alignment.centerLeft,
+                      isStudent ? Alignment.centerRight : Alignment.centerLeft,
                   child: Container(
                     margin: const EdgeInsets.symmetric(vertical: 6),
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: isUser ? Colors.indigo : Colors.grey.shade200,
+                      color: isStudent
+                          ? Colors.blue.shade100
+                          : Colors.grey.shade200,
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Text(
-                      m['text']!,
-                      style: TextStyle(
-                        color: isUser ? Colors.white : Colors.black,
-                      ),
-                    ),
+                    child: Text(msg["text"] ?? ""),
                   ),
                 );
-              }).toList(),
+              },
             ),
           ),
           if (_loading) const LinearProgressIndicator(),
@@ -80,24 +111,19 @@ class _AIChatScreenState extends State<AIChatScreen> {
                 Expanded(
                   child: TextField(
                     controller: _controller,
-                    decoration:
-                        const InputDecoration(hintText: 'Your answer...'),
+                    decoration: const InputDecoration(
+                      hintText: "Type your answer...",
+                    ),
+                    onSubmitted: (v) => _sendMessage(v),
                   ),
                 ),
                 IconButton(
                   icon: const Icon(Icons.send),
-                  onPressed: () {
-                    _messages.add({
-                      'role': 'user',
-                      'text': _controller.text
-                    });
-                    _controller.clear();
-                    _send();
-                  },
+                  onPressed: () => _sendMessage(_controller.text),
                 )
               ],
             ),
-          )
+          ),
         ],
       ),
     );
