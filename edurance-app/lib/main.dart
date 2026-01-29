@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'screens/subject_selection_screen.dart';
+import 'screens/subject_selection_screen_V2.dart';
+import 'theme/app_theme.dart';
 
 void main() {
   runApp(const EduranceApp());
@@ -13,11 +14,8 @@ class EduranceApp extends StatelessWidget {
     return MaterialApp(
       title: 'Edurance AI',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        colorSchemeSeed: Colors.green,
-      ),
-      home: const SubjectSelectionScreen(),
+      theme: AppTheme.darkTheme,
+      home: SubjectSelectionScreen(),
     );
   }
 }

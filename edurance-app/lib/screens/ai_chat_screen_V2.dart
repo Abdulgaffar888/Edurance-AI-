@@ -38,7 +38,10 @@ class _AIChatScreenState extends State<AIChatScreen> {
     setState(() => _loading = true);
 
     if (text != null && text.trim().isNotEmpty) {
-      _messages.add({"role": "student", "text": text});
+      _messages.add({
+        "role": "student",
+        "text": text.trim(),
+      });
     }
 
     try {
@@ -54,20 +57,21 @@ class _AIChatScreenState extends State<AIChatScreen> {
 
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
+
         _messages.add({
           "role": "teacher",
-          "text": data["reply"] ?? "No response",
+          "text": data["reply"] ?? "No response from teacher.",
         });
       } else {
         _messages.add({
           "role": "teacher",
-          "text": "Server error (${res.statusCode}).",
+          "text": "Server error (${res.statusCode}). Please try again.",
         });
       }
-    } catch (e) {
+    } catch (_) {
       _messages.add({
         "role": "teacher",
-        "text": "Network error. Please try again.",
+        "text": "Network error. Please check your connection.",
       });
     }
 
@@ -78,12 +82,18 @@ class _AIChatScreenState extends State<AIChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.topic)),
+      backgroundColor: const Color(0xFF0A0A15), // deep space background
+      appBar: AppBar(
+        title: Text(
+          widget.topic,
+          style: const TextStyle(fontSize: 16),
+        ),
+      ),
       body: Column(
         children: [
           Expanded(
             child: ListView.builder(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(14),
               itemCount: _messages.length,
               itemBuilder: (_, index) {
                 final msg = _messages[index];
@@ -93,36 +103,59 @@ class _AIChatScreenState extends State<AIChatScreen> {
                   alignment:
                       isStudent ? Alignment.centerRight : Alignment.centerLeft,
                   child: Container(
+                    constraints: const BoxConstraints(maxWidth: 700),
                     margin: const EdgeInsets.symmetric(vertical: 6),
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
                       color: isStudent
-                          ? Colors.blue.shade100
-                          : Colors.grey.shade200,
-                      borderRadius: BorderRadius.circular(12),
+                          ? const Color(0xFF00D4FF).withOpacity(0.85)
+                          : Colors.white,
+                      borderRadius: BorderRadius.circular(14),
                     ),
-                    child: Text(msg["text"] ?? ""),
+                    child: Text(
+                      msg["text"] ?? "",
+                      style: TextStyle(
+                        color: isStudent ? Colors.black : Colors.black87,
+                        fontSize: 15,
+                        height: 1.5,
+                      ),
+                    ),
                   ),
                 );
               },
             ),
           ),
-          if (_loading) const LinearProgressIndicator(),
-          Padding(
-            padding: const EdgeInsets.all(8),
+
+          if (_loading)
+            const LinearProgressIndicator(minHeight: 2),
+
+          Container(
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+            color: const Color(0xFF0F0F1E),
             child: Row(
               children: [
                 Expanded(
                   child: TextField(
                     controller: _controller,
-                    decoration: const InputDecoration(
+                    style: const TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
                       hintText: "Type your answer...",
+                      hintStyle: TextStyle(
+                        color: Colors.white.withOpacity(0.5),
+                      ),
+                      filled: true,
+                      fillColor: const Color(0xFF1A1A2E),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
                     ),
                     onSubmitted: _sendMessage,
                   ),
                 ),
+                const SizedBox(width: 8),
                 IconButton(
-                  icon: const Icon(Icons.send),
+                  icon: const Icon(Icons.send, color: Color(0xFF00D4FF)),
                   onPressed: () => _sendMessage(_controller.text),
                 ),
               ],
