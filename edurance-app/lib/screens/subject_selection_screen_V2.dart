@@ -7,7 +7,7 @@ class SubjectSelectionScreen extends StatelessWidget {
 
   static const subjects = [
     {
-      'name': 'Mathematics',
+      'name': 'Social Studies',
       'gradient': [AppTheme.auroraBlue, AppTheme.auroraPurple]
     },
     {
