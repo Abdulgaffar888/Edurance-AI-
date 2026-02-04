@@ -15,10 +15,6 @@ class SubjectSelectionScreen extends StatelessWidget {
       'gradient': [AppTheme.auroraPurple, AppTheme.auroraPink]
     },
     {
-      'name': 'Chemistry',
-      'gradient': [AppTheme.auroraGreen, AppTheme.auroraBlue]
-    },
-    {
       'name': 'Biology',
       'gradient': [AppTheme.auroraPink, AppTheme.auroraGreen]
     },

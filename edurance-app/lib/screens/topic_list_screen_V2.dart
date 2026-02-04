@@ -33,18 +33,15 @@ class TopicListScreen extends StatelessWidget {
     ],
     'physics': [
       'Reflection of Light at Curved Surfaces - Chapter 1 (Spherical mirrors, Ray diagrams, Magnification)',
-      'Refraction of Light at Plane Surfaces - Chapter 2 (Refractive index, Snell\'s law, Total Internal Reflection)',
-      'Refraction of Light at Curved Surfaces - Chapter 3 (Lenses, Lens maker\'s formula)',
-      'The Human Eye and the Colourful World - Chapter 4 (Eye defects, Dispersion, Scattering of light)',
-      'Electric Current - Chapter 5 (Ohm\'s Law, Kirchhoff\'s Laws, Resistance in Series/Parallel)',
-      'Electromagnetism - Chapter 6 (Magnetic field, Induction, Motor, Generator)',
-    ],
-    'chemistry': [
       'Chemical Equations - Chapter 1 (Types of reactions, Balancing, Effects of oxidation)',
       'Acids, Bases and Salts - Chapter 1 (pH Scale, Indicators, Salts from common salt)',
+      'Refraction of Light at Curved Surfaces - Chapter 3 (Lenses, Lens maker\'s formula)',
+      'The Human Eye and the Colourful World - Chapter 4 (Eye defects, Dispersion, Scattering of light)',
       'Structure of Atom - Chapter 3 (Spectrum, Quantum numbers, Electronic configuration)',
       'Classification of Elements - The Periodic Table - Chapter 4 (Periodic properties, Groups/Periods)',
       'Chemical Bonding - Chapter 5 (Ionic and Covalent bonding, VSEPR theory)',
+      'Electric Current - Chapter 5 (Ohm\'s Law, Kirchhoff\'s Laws, Resistance in Series/Parallel)',
+      'Electromagnetism - Chapter 6 (Magnetic field, Induction, Motor, Generator)',
       'Principles of Metallurgy - Chapter 6 (Extraction of metals, Corrosion, Purification)',
       'Carbon and its Compounds - Chapter 7 (Hybridization, Allotropes, IUPAC nomenclature)',
     ],
@@ -53,10 +50,10 @@ class TopicListScreen extends StatelessWidget {
       'Respiration - Chapter 2 (Aerobic/Anaerobic, Human respiratory system, Combustion)',
       'Transportation - Chapter 3 (Heart structure, Blood vessels, Lymphatic system)',
       'Excretion - Chapter 4 (Nephron, Kidney transplantation, Excretion in plants)',
-      'Control and Coordination - Chapter 5 (Nervous system, Brain, Plant hormones)',
+      'Coordination - Chapter 5 (Nervous system, Brain, Plant hormones)',
       'Reproduction - Chapter 6 (Asexual/Sexual, Flower structure, Human birth control)',
       'Coordination in Life Processes - Chapter 7 (Hunger signals, Peristalsis, Villus)',
-      'Heredity - Chapter 8 (Mendel\'s laws, Sex determination, Evolution)',
+      'Heredity and Evolution - Chapter 8 (Mendel\'s laws, Sex determination, Evolution)',
       'Our Environment - Chapter 9 (Food chains, Ecological pyramids, Bio-accumulation)',
       'Natural Resources - Chapter 10 (Conservation, Soil/Water management, Sustainability)',
     ],
@@ -66,11 +63,11 @@ class TopicListScreen extends StatelessWidget {
   List<String>? _getNormalizedTopics(String input) {
     // 1. Convert to lowercase: "Physics (Class 10 TS-SSC)" -> "physics (class 10 ts-ssc)"
     String key = input.toLowerCase().trim();
-    
+
     // 2. Remove all common suffixes using a regex or simple replaces
     key = key.replaceAll(' (class 10 ts-ssc)', '');
     key = key.replaceAll(' (class 10 ncert)', '');
-    
+
     // 3. Match against the clean keys in our Map
     return topics[key];
   }
@@ -91,7 +88,8 @@ class TopicListScreen extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.search_off, size: 48, color: AppTheme.secondaryText),
+                  const Icon(Icons.search_off,
+                      size: 48, color: AppTheme.secondaryText),
                   const SizedBox(height: 16),
                   Text(
                     'No topics found for "$subject"',
