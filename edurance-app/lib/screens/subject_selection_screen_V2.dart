@@ -33,8 +33,16 @@ class SubjectSelectionScreen extends StatelessWidget {
         child: LayoutBuilder(
           builder: (context, constraints) {
             // Responsive grid for web
-            int crossAxisCount = constraints.maxWidth > 600 ? 4 : 2;
-            double childAspectRatio = constraints.maxWidth > 600 ? 0.8 : 0.9;
+            int crossAxisCount = constraints.maxWidth > 800
+                ? 3
+                : constraints.maxWidth > 500
+                    ? 2
+                    : 1;
+            double childAspectRatio = constraints.maxWidth > 800
+                ? 1.2
+                : constraints.maxWidth > 500
+                    ? 1.1
+                    : 2.5;
 
             return GridView.count(
               crossAxisCount: crossAxisCount,
@@ -118,6 +126,8 @@ class _SubjectCardState extends State<_SubjectCard>
 
   @override
   Widget build(BuildContext context) {
+    final screenSize = MediaQuery.of(context).size;
+
     return GestureDetector(
       onTapDown: (_) => _animationController.forward(),
       onTapUp: (_) {
@@ -161,30 +171,35 @@ class _SubjectCardState extends State<_SubjectCard>
                     width: 1,
                   ),
                 ),
-                child: Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Flexible(
+                        child: Icon(
                           _getSubjectIcon(widget.subjectName),
-                          size: 40,
+                          size: screenSize.width > 500 ? 40 : 32,
                           color: Colors.white.withOpacity(0.9),
                         ),
-                        const SizedBox(height: 12),
-                        Text(
+                      ),
+                      const SizedBox(height: 8),
+                      Flexible(
+                        child: Text(
                           widget.subjectName,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
                             color: Colors.white,
-                            fontSize: 18,
+                            fontSize: screenSize.width > 500 ? 16 : 14,
                             fontWeight: FontWeight.w700,
                             letterSpacing: 0.5,
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ),
