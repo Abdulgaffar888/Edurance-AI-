@@ -3,7 +3,7 @@ dotenv.config();
 
 import express from "express";
 import cors from "cors";
-import teachRouter from "./teach.js";
+import teachRouter from "./routes/teach.js"; // ✅ FIXED PATH
 
 const app = express();
 

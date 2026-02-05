@@ -1,8 +1,19 @@
 import express from "express";
-import { generateTeacherReply } from "./teacherAI.js";
+import { generateTeacherReply } from "../services/teacherAI.js";
 
 const router = express.Router();
 const sessions = new Map();
+
+function cleanText(text) {
+  if (!text || typeof text !== "string") return "";
+  return text
+    .replace(/\*\*/g, "")
+    .replace(/#+\s?/g, "")
+    .replace(/Onboarding:?/gi, "")
+    .replace(/Checking question:?/gi, "")
+    .replace(/Concept\s*\d+:?/gi, "")
+    .trim();
+}
 
 router.post("/", async (req, res) => {
   const { subject, topic, message } = req.body;
@@ -17,21 +28,22 @@ router.post("/", async (req, res) => {
   const history = sessions.get(key);
 
   if (message && message.trim()) {
-    history.push({ role: "student", text: message });
+    history.push({ role: "student", text: message.trim() });
   }
 
   try {
-    const reply = await generateTeacherReply({
+    const rawReply = await generateTeacherReply({
       subject,
       topic,
       history,
     });
 
+    const reply = cleanText(rawReply);
     history.push({ role: "teacher", text: reply });
 
     res.json({ reply });
   } catch (e) {
-    console.error(e);
+    console.error("Teach error:", e);
     res.status(500).json({ reply: "Teacher unavailable" });
   }
 });
