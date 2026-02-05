@@ -1,5 +1,5 @@
 // ============================================================================
-// Edurance Backend - Teach Route Handler
+// Edurance Backend - Teach Route Handler (FIXED)
 // File: src/routes/teach.js
 // ============================================================================
 
@@ -11,83 +11,91 @@ const router = express.Router();
 // ============================================================================
 // POST /api/teach
 // ============================================================================
-// This route receives a user's learning query and returns AI-generated
-// educational content using OpenAI's GPT model.
+// Matches Flutter's request format exactly
 // ============================================================================
 
 router.post('/', async (req, res) => {
   try {
-    // Initialize OpenAI client inside the handler (after env vars are loaded)
+    console.log('📥 Received teach request:', JSON.stringify(req.body, null, 2));
+
+    // Initialize OpenAI client
     const openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY
     });
 
-    // Extract user query from request body
-    const { userQuery } = req.body;
+    // Extract data from Flutter's request format
+    const { subject, topic, message } = req.body;
 
     // Validate input
-    if (!userQuery || typeof userQuery !== 'string') {
+    if (!subject || !topic) {
       return res.status(400).json({ 
         success: false,
-        error: 'Missing or invalid userQuery in request body',
-        message: 'Please provide a valid userQuery string'
+        error: 'Missing required fields: subject and topic',
+        reply: 'Error: Subject and topic are required.'
       });
     }
 
-    if (userQuery.trim().length === 0) {
-      return res.status(400).json({
-        success: false,
-        error: 'userQuery cannot be empty',
-        message: 'Please provide a non-empty query'
-      });
-    }
+    console.log(`🎓 Subject: ${subject}, Topic: ${topic}`);
+    console.log(`💬 Student message: ${message || '(starting conversation)'}`);
 
-    console.log('Processing teach request:', userQuery);
+    // Build the teaching prompt
+    const systemPrompt = `You are an expert ${subject} teacher specializing in ${topic}. 
+Your teaching style:
+- Explain concepts step-by-step like a patient human teacher
+- Use simple, relatable examples
+- Ask questions to check understanding
+- Adapt explanations based on student responses
+- Be encouraging and supportive
+- Never overwhelm with too much information at once
 
-    // Call OpenAI API to generate teaching content
+Topic focus: ${topic}`;
+
+    const userMessage = message || `I want to learn about ${topic}. Please start teaching me from the basics.`;
+
+    // Call OpenAI API
     const completion = await openai.chat.completions.create({
       model: 'gpt-3.5-turbo',
       messages: [
         {
           role: 'system',
-          content: 'You are an expert AI tutor for the Edurance AI learning platform. Explain concepts clearly, provide examples, and adapt your teaching style to help students understand complex topics. Be encouraging and patient.'
+          content: systemPrompt
         },
         {
           role: 'user',
-          content: userQuery
+          content: userMessage
         }
       ],
       temperature: 0.7,
-      max_tokens: 800,
+      max_tokens: 500,
       top_p: 1,
-      frequency_penalty: 0,
-      presence_penalty: 0
+      frequency_penalty: 0.3,
+      presence_penalty: 0.3
     });
 
     // Extract the AI response
-    const teachingContent = completion.choices[0].message.content;
+    const teacherReply = completion.choices[0].message.content;
 
-    // Log success
-    console.log('✓ Successfully generated teaching content');
+    console.log('✅ Generated reply:', teacherReply.substring(0, 100) + '...');
 
-    // Return successful response
+    // Return in Flutter's expected format
     res.json({
       success: true,
-      query: userQuery,
-      response: teachingContent,
+      reply: teacherReply,  // ⭐ This is what Flutter expects
+      subject: subject,
+      topic: topic,
       timestamp: new Date().toISOString(),
       model: 'gpt-3.5-turbo'
     });
 
   } catch (error) {
-    console.error('Error in /api/teach:', error);
+    console.error('❌ Error in /api/teach:', error);
 
-    // Handle specific OpenAI API errors
+    // Handle OpenAI errors
     if (error.status === 401) {
       return res.status(500).json({ 
         success: false,
         error: 'OpenAI API authentication failed',
-        message: 'Invalid API key. Please check server configuration.'
+        reply: 'Sorry, there is a server configuration issue. Please contact support.'
       });
     }
 
@@ -95,38 +103,21 @@ router.post('/', async (req, res) => {
       return res.status(429).json({ 
         success: false,
         error: 'Rate limit exceeded',
-        message: 'Too many requests. Please try again in a moment.'
+        reply: 'Too many requests. Please wait a moment and try again.'
       });
     }
 
-    if (error.status === 400) {
-      return res.status(400).json({
-        success: false,
-        error: 'Invalid request to OpenAI',
-        message: error.message
-      });
-    }
-
-    // Handle missing API key
-    if (error.message && error.message.includes('OPENAI_API_KEY')) {
-      return res.status(500).json({
-        success: false,
-        error: 'Server configuration error',
-        message: 'OpenAI API key is not configured. Please contact administrator.'
-      });
-    }
-
-    // Generic error response
+    // Generic error - still return valid JSON with "reply" field
     res.status(500).json({ 
       success: false,
-      error: 'Failed to process teaching request',
-      message: process.env.NODE_ENV === 'development' ? error.message : 'An unexpected error occurred'
+      error: error.message,
+      reply: 'Sorry, I encountered an error. Please try again.'
     });
   }
 });
 
 // ============================================================================
-// Export router (ESM syntax)
+// Export router
 // ============================================================================
 
 export default router;
