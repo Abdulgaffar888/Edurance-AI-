@@ -22,7 +22,7 @@ class _AIChatScreenState extends State<AIChatScreen> {
   bool _loading = false;
 
   static const String backendUrl =
-      "https://edurance-ai.onrender.com/api/teach";
+      "https://corsproxy.io/?https://edurance-ai.onrender.com";
 
   @override
   void initState() {
