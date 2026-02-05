@@ -21,33 +21,28 @@ class _AIChatScreenState extends State<AIChatScreen> {
   final TextEditingController _controller = TextEditingController();
   bool _loading = false;
 
+  // ✅ ONLY backend endpoint
   static const String backendUrl =
-      "https://corsproxy.io/?https://edurance-ai.onrender.com";
+      "https://YOUR-NEW-RENDER-URL.onrender.com/api/teach";
 
   @override
   void initState() {
     super.initState();
-    _startConversation();
-  }
-
-  Future<void> _startConversation() async {
-    await _sendMessage(null);
+    _sendMessage(null); // auto-start teaching
   }
 
   Future<void> _sendMessage(String? text) async {
+    if (_loading) return;
     setState(() => _loading = true);
 
     if (text != null && text.trim().isNotEmpty) {
-      _messages.add({
-        "role": "student",
-        "text": text.trim(),
-      });
+      _messages.add({"role": "student", "text": text.trim()});
     }
 
     try {
-      final res = await http.post(
+      final response = await http.post(
         Uri.parse(backendUrl),
-        headers: {"Content-Type": "application/json"},
+        headers: const {"Content-Type": "application/json"},
         body: jsonEncode({
           "subject": widget.subject,
           "topic": widget.topic,
@@ -55,9 +50,8 @@ class _AIChatScreenState extends State<AIChatScreen> {
         }),
       );
 
-      if (res.statusCode == 200) {
-        final data = jsonDecode(res.body);
-
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
         _messages.add({
           "role": "teacher",
           "text": data["reply"] ?? "No response from teacher.",
@@ -65,13 +59,13 @@ class _AIChatScreenState extends State<AIChatScreen> {
       } else {
         _messages.add({
           "role": "teacher",
-          "text": "Server error (${res.statusCode}). Please try again.",
+          "text": "Server error (${response.statusCode})",
         });
       }
     } catch (_) {
       _messages.add({
         "role": "teacher",
-        "text": "Network error. Please check your connection.",
+        "text": "Network error. Please try again.",
       });
     }
 
@@ -82,12 +76,9 @@ class _AIChatScreenState extends State<AIChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0A15), // deep space background
+      backgroundColor: const Color(0xFF0A0A15),
       appBar: AppBar(
-        title: Text(
-          widget.topic,
-          style: const TextStyle(fontSize: 16),
-        ),
+        title: Text(widget.topic, style: const TextStyle(fontSize: 16)),
       ),
       body: Column(
         children: [
@@ -95,27 +86,26 @@ class _AIChatScreenState extends State<AIChatScreen> {
             child: ListView.builder(
               padding: const EdgeInsets.all(14),
               itemCount: _messages.length,
-              itemBuilder: (_, index) {
-                final msg = _messages[index];
+              itemBuilder: (_, i) {
+                final msg = _messages[i];
                 final isStudent = msg["role"] == "student";
 
                 return Align(
                   alignment:
                       isStudent ? Alignment.centerRight : Alignment.centerLeft,
                   child: Container(
-                    constraints: const BoxConstraints(maxWidth: 700),
                     margin: const EdgeInsets.symmetric(vertical: 6),
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
                       color: isStudent
-                          ? const Color(0xFF00D4FF).withOpacity(0.85)
+                          ? const Color(0xFF00D4FF)
                           : Colors.white,
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: Text(
                       msg["text"] ?? "",
-                      style: TextStyle(
-                        color: isStudent ? Colors.black : Colors.black87,
+                      style: const TextStyle(
+                        color: Colors.black,
                         fontSize: 15,
                         height: 1.5,
                       ),
@@ -125,37 +115,21 @@ class _AIChatScreenState extends State<AIChatScreen> {
               },
             ),
           ),
-
-          if (_loading)
-            const LinearProgressIndicator(minHeight: 2),
-
-          Container(
-            padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-            color: const Color(0xFF0F0F1E),
+          if (_loading) const LinearProgressIndicator(minHeight: 2),
+          Padding(
+            padding: const EdgeInsets.all(12),
             child: Row(
               children: [
                 Expanded(
                   child: TextField(
                     controller: _controller,
-                    style: const TextStyle(color: Colors.white),
-                    decoration: InputDecoration(
-                      hintText: "Type your answer...",
-                      hintStyle: TextStyle(
-                        color: Colors.white.withOpacity(0.5),
-                      ),
-                      filled: true,
-                      fillColor: const Color(0xFF1A1A2E),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
-                      ),
-                    ),
                     onSubmitted: _sendMessage,
+                    decoration:
+                        const InputDecoration(hintText: "Type your answer…"),
                   ),
                 ),
-                const SizedBox(width: 8),
                 IconButton(
-                  icon: const Icon(Icons.send, color: Color(0xFF00D4FF)),
+                  icon: const Icon(Icons.send),
                   onPressed: () => _sendMessage(_controller.text),
                 ),
               ],

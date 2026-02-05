@@ -1,5 +1,5 @@
 import dotenv from "dotenv";
-dotenv.config(); // ✅ FORCE env loading here (critical fix)
+dotenv.config();
 
 import OpenAI from "openai";
 
@@ -49,16 +49,11 @@ Pace:
 - Moderate and balanced
 `;
 
-// ✅ OpenAI client (env now guaranteed to be loaded)
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-/**
- * Core teacher response generator
- * LOGIC PRESERVED — ONLY ENV LOADING FIXED
- */
-async function generateTeacherReply({ subject, topic, history }) {
+export async function generateTeacherReply({ subject, topic, history }) {
   const messages = [
     {
       role: "system",
@@ -73,20 +68,8 @@ ABSOLUTE RULES (NO EXCEPTIONS):
 1. You MUST teach ONLY the given subject and ONLY the given topic.
 2. You are NOT allowed to introduce any other chapter or concept.
 3. You must NOT choose the syllabus yourself.
-4. If the topic is "Acids, Bases and Salts", you must start with acids/bases only.
-5. If the topic is "Transportation in Animals and Plants", you must talk ONLY about blood, heart, xylem, phloem.
-6. Onboarding is allowed ONLY ONCE at the very start (2 lines max).
+4. Onboarding is allowed ONLY ONCE at the very start (2 lines max).
 
-TEACHING STYLE:
-- One concept at a time
-- Exam-oriented
-- Real-life example
-- One checking question at the end
-`,
-    },
-    {
-      role: "system",
-      content: `
 SUBJECT: ${subject}
 TOPIC (STRICT): ${topic}
 NCERT CLASS: 10
@@ -94,14 +77,12 @@ NCERT CLASS: 10
     },
   ];
 
-  // ---------- CONVERSATION FLOW ----------
   if (!history || history.length === 0) {
     messages.push({
       role: "user",
       content: `
 Start teaching THIS topic immediately.
 Begin with the FIRST sub-concept of "${topic}".
-Do NOT change the topic.
 Do NOT ask what to study.
 `,
     });
@@ -113,27 +94,17 @@ Do NOT ask what to study.
       });
     });
   }
-  // ---------- END FLOW ----------
 
-  try {
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages,
-      temperature: 0.35,
-    });
+  const completion = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages,
+    temperature: 0.35,
+  });
 
-    const text = completion?.choices?.[0]?.message?.content;
-
-    if (!text || !text.trim()) {
-      throw new Error("Empty response from OpenAI");
-    }
-
-    return text.trim();
-  } catch (err) {
-    console.error("❌ OpenAI Teacher Model Error");
-    console.error(err?.response?.data || err.message);
-    throw new Error("Teacher is unavailable right now");
+  const text = completion?.choices?.[0]?.message?.content;
+  if (!text || !text.trim()) {
+    throw new Error("Empty response from OpenAI");
   }
-}
 
-export { generateTeacherReply };
+  return text.trim();
+}
