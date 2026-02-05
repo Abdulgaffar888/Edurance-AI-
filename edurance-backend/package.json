@@ -1,31 +1,16 @@
 {
   "name": "edurance-backend",
-  "version": "0.1.0",
-  "main": "src/index.js",
-  "engines": {
-    "node": ">=18"
-  },
+  "version": "1.0.0",
   "type": "module",
+  "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js"
   },
   "dependencies": {
-    "@google/generative-ai": "^0.24.1",
-    "@supabase/supabase-js": "^2.94.1",
-    "aws-sdk": "^2.1370.0",
-    "axios": "^1.7.9",
-    "cors": "^2.8.6",
-    "dotenv": "^17.2.3",
-    "express": "^4.19.2",
-    "firebase-admin": "^13.6.0",
-    "formidable": "^3.5.1",
-    "multer": "^1.4.5-lts.1",
-    "openai": "^4.76.0"
-  },
-  "devDependencies": {
-    "@marp-team/marp-cli": "^3.4.0",
-    "nodemon": "^3.1.7",
-    "puppeteer": "^23.10.0"
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "openai": "^4.20.1"
   }
 }
