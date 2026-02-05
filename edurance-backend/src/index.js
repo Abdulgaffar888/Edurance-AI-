@@ -1,5 +1,5 @@
 // ============================================================================
-// Edurance Backend - Server Entry Point
+// Edurance Backend - Server Entry Point (ENHANCED)
 // File: src/index.js
 // ============================================================================
 
@@ -19,15 +19,39 @@ const PORT = process.env.PORT || 3000;
 // MIDDLEWARE
 // ============================================================================
 
-// Enable CORS for all origins (adjust for production security if needed)
-app.use(cors());
+// Enhanced CORS configuration - CRITICAL FOR BROWSER REQUESTS
+const corsOptions = {
+  origin: '*', // Allow all origins (tighten in production)
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+  credentials: false,
+  optionsSuccessStatus: 200,
+  preflightContinue: false
+};
 
-// Parse JSON request bodies
+// Apply CORS middleware
+app.use(cors(corsOptions));
+
+// Explicitly handle preflight OPTIONS requests
+app.options('*', cors(corsOptions));
+
+// Parse JSON request bodies (MUST come after CORS)
 app.use(express.json());
 
-// Request logging middleware (helpful for debugging)
+// Detailed request logging middleware
 app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  const timestamp = new Date().toISOString();
+  console.log('━'.repeat(70));
+  console.log(`📥 ${timestamp} - ${req.method} ${req.path}`);
+  console.log(`   Origin: ${req.get('origin') || 'none'}`);
+  console.log(`   Content-Type: ${req.get('content-type') || 'none'}`);
+  console.log(`   User-Agent: ${req.get('user-agent')?.substring(0, 50) || 'none'}`);
+  
+  if (req.method === 'POST' && req.body && Object.keys(req.body).length > 0) {
+    console.log(`   Body:`, JSON.stringify(req.body, null, 2));
+  }
+  
+  console.log('━'.repeat(70));
   next();
 });
 
@@ -40,7 +64,12 @@ app.get('/', (req, res) => {
   res.json({ 
     status: 'ok', 
     message: 'Edurance AI Backend is running',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
+    endpoints: {
+      health: '/',
+      teach: '/api/teach (POST)'
+    }
   });
 });
 
@@ -53,19 +82,28 @@ app.use('/api/teach', teachRouter);
 
 // 404 handler - must come AFTER all routes
 app.use((req, res) => {
+  console.log(`❌ 404 - Route not found: ${req.method} ${req.path}`);
   res.status(404).json({ 
+    success: false,
     error: 'Not Found',
     path: req.path,
-    message: `Route ${req.method} ${req.path} does not exist`
+    message: `Route ${req.method} ${req.path} does not exist`,
+    availableRoutes: ['GET /', 'POST /api/teach']
   });
 });
 
 // Global error handler
 app.use((err, req, res, next) => {
-  console.error('Error:', err);
+  console.error('❌ Unhandled Error:', err);
+  console.error('Stack:', err.stack);
+  
   res.status(err.status || 500).json({ 
+    success: false,
     error: err.message || 'Internal Server Error',
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+    ...(process.env.NODE_ENV === 'development' && { 
+      stack: err.stack,
+      details: err
+    })
   });
 });
 
@@ -73,13 +111,17 @@ app.use((err, req, res, next) => {
 // START SERVER
 // ============================================================================
 
-app.listen(PORT, () => {
-  console.log('='.repeat(60));
-  console.log('✓ Edurance AI Backend Server Started');
-  console.log('='.repeat(60));
-  console.log(`✓ Port: ${PORT}`);
-  console.log(`✓ Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`✓ Health check: http://localhost:${PORT}/`);
-  console.log(`✓ Teach endpoint: http://localhost:${PORT}/api/teach`);
-  console.log('='.repeat(60));
+app.listen(PORT, '0.0.0.0', () => {
+  console.log('='.repeat(70));
+  console.log('✅ Edurance AI Backend Server Started Successfully');
+  console.log('='.repeat(70));
+  console.log(`🚀 Port: ${PORT}`);
+  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`🔑 OpenAI API Key: ${process.env.OPENAI_API_KEY ? '✓ Configured' : '✗ MISSING'}`);
+  console.log(`📍 Health check: http://localhost:${PORT}/`);
+  console.log(`🎓 Teach endpoint: http://localhost:${PORT}/api/teach (POST)`);
+  console.log(`🌐 Public URL: https://edurance-ai-v2.onrender.com`);
+  console.log('='.repeat(70));
+  console.log('📝 Waiting for requests...');
+  console.log('='.repeat(70));
 });
