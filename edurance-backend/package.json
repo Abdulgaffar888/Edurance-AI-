@@ -5,12 +5,14 @@
   "engines": {
     "node": ">=18"
   },
+  "type": "module",
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
+    "@supabase/supabase-js": "^2.94.1",
     "aws-sdk": "^2.1370.0",
     "axios": "^1.7.9",
     "cors": "^2.8.5",

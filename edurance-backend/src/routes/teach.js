@@ -1,8 +1,6 @@
-const express = require("express");
-const { generateTeacherReply } = require("../services/teacherAI");
-
-// 🆕 SUPABASE (BACKEND ONLY)
-const { createClient } = require("@supabase/supabase-js");
+import express from "express";
+import { generateTeacherReply } from "../services/teacherAI.js";
+import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -12,10 +10,10 @@ const supabase = createClient(
 const router = express.Router();
 const sessions = new Map();
 
-/**
- * Clean AI output to remove formatting / onboarding / headings
- * REQUIRED for production stability
- */
+// ===== CONFIG =====
+const FREE_DAILY_LIMIT = 10;
+
+// ===== UTILS =====
 function cleanText(text) {
   if (!text || typeof text !== "string") return "";
 
@@ -23,46 +21,65 @@ function cleanText(text) {
     .replace(/\*\*/g, "")
     .replace(/#+\s?/g, "")
     .replace(/Onboarding:?/gi, "")
-    .replace(/First sub-concept:?/gi, "")
     .replace(/Checking question:?/gi, "")
     .replace(/Concept\s*\d+:?/gi, "")
-    .replace(/Let us begin:?/gi, "")
-    .replace(/We will now:?/gi, "")
     .trim();
 }
 
-/**
- * ===============================
- * 🧠 AI TEACHING ROUTE
- * ===============================
- */
+// ===== MAIN TEACH ROUTE =====
 router.post("/", async (req, res) => {
-  const { subject, topic, message } = req.body;
+  const { user_id, subject, topic, message } = req.body;
 
-  if (!subject || !topic) {
+  if (!user_id || !subject || !topic) {
     return res.status(400).json({
-      error: "Subject and topic are required",
+      error: "user_id, subject, and topic are required",
     });
   }
 
-  const sessionKey = `${subject}::${topic}`;
+  // ---- CHECK USER PLAN ----
+  const { data: user, error: userError } = await supabase
+    .from("users")
+    .select("plan")
+    .eq("id", user_id)
+    .single();
+
+  if (userError || !user) {
+    return res.status(401).json({ error: "Invalid user" });
+  }
+
+  const isPremium = user.plan === "premium";
+  const today = new Date().toISOString().slice(0, 10);
+
+  // ---- FREE PLAN LIMIT ----
+  if (!isPremium) {
+    const { data: usage } = await supabase
+      .from("user_daily_usage")
+      .select("responses_used")
+      .eq("user_id", user_id)
+      .eq("date", today)
+      .single();
+
+    if (usage && usage.responses_used >= FREE_DAILY_LIMIT) {
+      return res.status(403).json({
+        reply:
+          "You’ve completed today’s free learning session.\n\nUpgrade to Premium to continue learning without limits.",
+        waitingForAnswer: false,
+        limitReached: true,
+      });
+    }
+  }
+
+  // ---- SESSION MEMORY ----
+  const sessionKey = `${user_id}::${subject}::${topic}`;
 
   if (!sessions.has(sessionKey)) {
-    sessions.set(sessionKey, {
-      subject,
-      topic,
-      history: [],
-      startedAt: Date.now(),
-    });
+    sessions.set(sessionKey, { history: [] });
   }
 
   const session = sessions.get(sessionKey);
 
-  if (message && message.trim().length > 0) {
-    session.history.push({
-      role: "student",
-      text: message.trim(),
-    });
+  if (message && message.trim()) {
+    session.history.push({ role: "student", text: message.trim() });
   }
 
   try {
@@ -74,19 +91,25 @@ router.post("/", async (req, res) => {
 
     const reply = cleanText(rawReply);
 
-    session.history.push({
-      role: "teacher",
-      text: reply,
-    });
+    session.history.push({ role: "teacher", text: reply });
+
+    // ---- INCREMENT USAGE ----
+    if (!isPremium) {
+      await supabase.from("user_daily_usage").upsert({
+        user_id,
+        date: today,
+        responses_used:
+          session.history.filter((m) => m.role === "teacher").length,
+      });
+    }
 
     return res.json({
       reply,
       waitingForAnswer: true,
+      isPremium,
     });
   } catch (err) {
-    console.error("❌ Teach API failed:");
-    console.error(err);
-
+    console.error("❌ Teach API failed:", err);
     return res.status(500).json({
       reply: "Teacher is unavailable right now. Please try again.",
       waitingForAnswer: true,
@@ -94,41 +117,4 @@ router.post("/", async (req, res) => {
   }
 });
 
-/**
- * =================================
- * 🆕 SAVE LESSON PROGRESS
- * =================================
- */
-router.post("/save-progress", async (req, res) => {
-  const {
-    user_id,
-    lesson_id,
-    lesson_title,
-    subject,
-    progress,
-  } = req.body;
-
-  if (!user_id || !lesson_id) {
-    return res.status(400).json({ error: "Missing required fields" });
-  }
-
-  const { error } = await supabase
-    .from("user_lessons")
-    .upsert({
-      user_id,
-      lesson_id,
-      lesson_title,
-      subject,
-      progress,
-      completed: progress === 100,
-    });
-
-  if (error) {
-    console.error("❌ Failed to save progress:", error);
-    return res.status(500).json({ error: error.message });
-  }
-
-  return res.json({ success: true });
-});
-
-module.exports = router;
+export default router;

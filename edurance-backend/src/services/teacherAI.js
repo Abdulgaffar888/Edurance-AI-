@@ -1,3 +1,6 @@
+import dotenv from "dotenv";
+dotenv.config(); // ✅ FORCE env loading here (critical fix)
+
 import OpenAI from "openai";
 
 /**
@@ -46,13 +49,14 @@ Pace:
 - Moderate and balanced
 `;
 
+// ✅ OpenAI client (env now guaranteed to be loaded)
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
 /**
  * Core teacher response generator
- * LOGIC PRESERVED — ONLY MODEL LAYER CHANGED
+ * LOGIC PRESERVED — ONLY ENV LOADING FIXED
  */
 async function generateTeacherReply({ subject, topic, history }) {
   const messages = [
@@ -115,7 +119,7 @@ Do NOT ask what to study.
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages,
-      temperature: 0.35, // controlled, teacher-like
+      temperature: 0.35,
     });
 
     const text = completion?.choices?.[0]?.message?.content;
@@ -128,9 +132,8 @@ Do NOT ask what to study.
   } catch (err) {
     console.error("❌ OpenAI Teacher Model Error");
     console.error(err?.response?.data || err.message);
-
     throw new Error("Teacher is unavailable right now");
   }
 }
 
-module.exports = { generateTeacherReply };
+export { generateTeacherReply };

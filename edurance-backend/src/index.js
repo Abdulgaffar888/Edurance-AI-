@@ -1,23 +1,21 @@
-require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
+import dotenv from "dotenv";
+dotenv.config(); // 👈 MUST BE FIRST
+
+import express from "express";
+import teachRouter from "./routes/teach.js";
+
+console.log("OPENAI KEY PRESENT:", !!process.env.OPENAI_API_KEY);
+
 const app = express();
-const port = process.env.PORT || 3000;
-
-
-app.use(cors());
 app.use(express.json());
-app.use(express.static('public'));
 
 app.get("/", (req, res) => {
   res.send("Edurance backend is running");
 });
 
-// Routes
-app.use("/api/teach", require("./routes/teach"));
-app.use('/auth', require('./routes/auth'));
-app.use('/api/generate', require('./routes/generate'));
-app.use('/api/solve-image', require('./routes/solve'));
+app.use("/api/teach", teachRouter);
 
-
-app.listen(port, () => console.log(`Edurance backend listening on ${port}`));
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+});
