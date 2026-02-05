@@ -3,17 +3,33 @@ dotenv.config();
 
 import express from "express";
 import cors from "cors";
-import teachRouter from "./routes/teach.js"; // ✅ FIXED PATH
+import teachRouter from "./routes/teach.js";
 
 const app = express();
 
-app.use(cors({ origin: true }));
+/**
+ * ✅ SINGLE, CORRECT CORS CONFIG
+ * This fixes Flutter Web + Vercel + Render
+ */
+app.use(
+  cors({
+    origin: "*", // MVP: allow all (safe for now)
+    methods: ["GET", "POST", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
+
+// ✅ IMPORTANT: handle preflight BEFORE routes
+app.options("*", cors());
+
 app.use(express.json());
 
+// Health check
 app.get("/", (req, res) => {
   res.send("Edurance backend running");
 });
 
+// API routes
 app.use("/api/teach", teachRouter);
 
 const PORT = process.env.PORT || 3000;
