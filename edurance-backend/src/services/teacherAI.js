@@ -1,4 +1,4 @@
-const axios = require("axios");
+import OpenAI from "openai";
 
 /**
  * ⚠️ DO NOT MODIFY THIS PROMPT
@@ -46,39 +46,20 @@ Pace:
 - Moderate and balanced
 `;
 
-const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
-// model priority list
-const MODELS = [
-  "nvidia/nemotron-nano-9b-v2:free",
-  "google/gemma-3-27b-it:free",
-];
-
-async function callModel(model, messages) {
-  const res = await axios.post(
-    OPENROUTER_URL,
-    {
-      model,
-      messages,
-      temperature: 0.5,
-    },
-    {
-      headers: {
-        Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        "Content-Type": "application/json",
-        "HTTP-Referer": "https://edurance.ai",
-        "X-Title": "Edurance AI Tutor",
-      },
-      timeout: 20000,
-    }
-  );
-
-  return res.data?.choices?.[0]?.message?.content;
-}
-
+/**
+ * Core teacher response generator
+ * LOGIC PRESERVED — ONLY MODEL LAYER CHANGED
+ */
 async function generateTeacherReply({ subject, topic, history }) {
-  // ========== REPLACED MESSAGE CONSTRUCTION LOGIC ==========
   const messages = [
+    {
+      role: "system",
+      content: SYSTEM_PROMPT,
+    },
     {
       role: "system",
       content: `
@@ -97,7 +78,7 @@ TEACHING STYLE:
 - Exam-oriented
 - Real-life example
 - One checking question at the end
-`
+`,
     },
     {
       role: "system",
@@ -105,10 +86,11 @@ TEACHING STYLE:
 SUBJECT: ${subject}
 TOPIC (STRICT): ${topic}
 NCERT CLASS: 10
-`
-    }
+`,
+    },
   ];
 
+  // ---------- CONVERSATION FLOW ----------
   if (!history || history.length === 0) {
     messages.push({
       role: "user",
@@ -117,7 +99,7 @@ Start teaching THIS topic immediately.
 Begin with the FIRST sub-concept of "${topic}".
 Do NOT change the topic.
 Do NOT ask what to study.
-`
+`,
     });
   } else {
     history.slice(-6).forEach((m) => {
@@ -127,28 +109,28 @@ Do NOT ask what to study.
       });
     });
   }
-  // ========== END OF REPLACED SECTION ==========
+  // ---------- END FLOW ----------
 
-  let lastError = null;
+  try {
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages,
+      temperature: 0.35, // controlled, teacher-like
+    });
 
-  for (const model of MODELS) {
-    try {
-      const text = await callModel(model, messages);
+    const text = completion?.choices?.[0]?.message?.content;
 
-      if (text && text.trim().length > 0) {
-        return text.trim();
-      }
-    } catch (err) {
-      console.error(`❌ Model failed: ${model}`);
-      console.error(err?.response?.data || err.message);
-      lastError = err;
+    if (!text || !text.trim()) {
+      throw new Error("Empty response from OpenAI");
     }
-  }
 
-  throw new Error(
-    lastError?.response?.data?.error?.message ||
-      "All models failed to respond"
-  );
+    return text.trim();
+  } catch (err) {
+    console.error("❌ OpenAI Teacher Model Error");
+    console.error(err?.response?.data || err.message);
+
+    throw new Error("Teacher is unavailable right now");
+  }
 }
 
 module.exports = { generateTeacherReply };

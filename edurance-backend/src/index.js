@@ -9,7 +9,12 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
+app.get("/", (req, res) => {
+  res.send("Edurance backend is running");
+});
+
 // Routes
+app.use("/api/teach", require("./routes/teach"));
 app.use('/auth', require('./routes/auth'));
 app.use('/api/generate', require('./routes/generate'));
 app.use('/api/solve-image', require('./routes/solve'));
