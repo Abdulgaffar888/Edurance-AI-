@@ -4,22 +4,11 @@ import { generateTeacherReply } from "../services/teacherAI.js";
 const router = express.Router();
 const sessions = new Map();
 
-function cleanText(text) {
-  if (!text || typeof text !== "string") return "";
-  return text
-    .replace(/\*\*/g, "")
-    .replace(/#+\s?/g, "")
-    .replace(/Onboarding:?/gi, "")
-    .replace(/Checking question:?/gi, "")
-    .replace(/Concept\s*\d+:?/gi, "")
-    .trim();
-}
-
 router.post("/", async (req, res) => {
   const { subject, topic, message } = req.body;
 
   if (!subject || !topic) {
-    return res.status(400).json({ error: "subject and topic required" });
+    return res.status(400).json({ error: "subject & topic required" });
   }
 
   const key = `${subject}::${topic}`;
@@ -32,18 +21,11 @@ router.post("/", async (req, res) => {
   }
 
   try {
-    const rawReply = await generateTeacherReply({
-      subject,
-      topic,
-      history,
-    });
-
-    const reply = cleanText(rawReply);
+    const reply = await generateTeacherReply({ subject, topic, history });
     history.push({ role: "teacher", text: reply });
-
     res.json({ reply });
   } catch (e) {
-    console.error("Teach error:", e);
+    console.error(e);
     res.status(500).json({ reply: "Teacher unavailable" });
   }
 });
