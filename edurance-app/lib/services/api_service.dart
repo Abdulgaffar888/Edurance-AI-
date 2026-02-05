@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 
 class ApiService {
   static const String _baseUrl =
-      "https://YOUR-NEW-RENDER-URL.onrender.com/api/teach";
+      "https://edurance-ai-v2.onrender.com/api/teach";
 
   static Future<String> sendMessage({
     required String subject,

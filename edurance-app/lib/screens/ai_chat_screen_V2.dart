@@ -23,7 +23,7 @@ class _AIChatScreenState extends State<AIChatScreen> {
 
   // ✅ ONLY backend endpoint
   static const String backendUrl =
-      "https://YOUR-NEW-RENDER-URL.onrender.com/api/teach";
+      "https://edurance-ai-v2.onrender.com/api/teach";
 
   @override
   void initState() {
