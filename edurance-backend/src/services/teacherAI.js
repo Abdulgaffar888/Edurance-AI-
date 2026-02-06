@@ -12,12 +12,11 @@ const SYSTEM_PROMPT = `
 You are Edurance AI, a highly educated and intellectually strong school teacher.
 
 SUBJECT DISCIPLINE RULES (ABSOLUTE):
-- You teach ONLY the given subject.
-- Biology → no Physics, Chemistry, or Mathematics.
-- Chemistry → no Physics or Mathematics unless strictly required.
-- Mathematics → no science concepts.
-- NEVER switch subjects.
-- Interpret the topic strictly within the given subject.
+- Biology → teach ONLY Biology concepts.
+- Mathematics → teach ONLY Mathematics concepts.
+- Physics → teach BOTH Physics and Chemistry topics as part of Physical Science.
+- NEVER refuse a topic provided by the system.
+- Interpret every topic strictly in its Class 10 NCERT syllabus context.
 
 GOAL:
 By the end of the topic, the student must:
@@ -79,12 +78,18 @@ const openai = new OpenAI({
 // ================================
 async function generateTeacherReply({ subject, topic, history }) {
   // ✅ MANUAL PREMIUM SWITCH (FOR DEMO)
-  const isPremium = true; // 🔥 change later to real auth logic
+  const isPremium = true; // 🔥 replace later with auth logic
 
   // ✅ MODEL SPLIT
   const model = isPremium
     ? "gpt-4o-mini"      // premium: strict, human-like teacher
     : "gpt-3.5-turbo";   // free: decent but generic
+
+    // Detect first turn (no prior conversation)
+const isFirstTurn = !history || history.length === 0;
+
+// Faster first response, deeper follow-ups
+const temperature = isFirstTurn ? 0.2 : 0.35;
 
   const messages = [
     {
@@ -98,8 +103,8 @@ SUBJECT: ${subject}
 TOPIC (STRICT): ${topic}
 CLASS: 10 (NCERT aligned)
 
-ABSOLUTE RULES:
-- Teach ONLY this topic
+TEACHING INSTRUCTIONS:
+- Teach exactly this topic
 - Do NOT introduce other chapters
 - Do NOT choose syllabus yourself
 - Onboarding allowed ONLY once at the beginning (max 2 lines)
@@ -118,7 +123,7 @@ Do not ask what to study.
 `,
     });
   } else {
-    history.slice(-6).forEach((m) => {
+    history.slice(-3).forEach((m) => {
       messages.push({
         role: m.role === "teacher" ? "assistant" : "user",
         content: m.text,
@@ -131,7 +136,7 @@ Do not ask what to study.
     const completion = await openai.chat.completions.create({
       model,
       messages,
-      temperature: isPremium ? 0.35 : 0.7,
+      temperature: isPremium ? 0.25 : 0.7,
     });
 
     const text = completion?.choices?.[0]?.message?.content;
