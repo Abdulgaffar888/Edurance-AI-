@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import 'topic_list_screen_V2.dart';
+import 'under_development_screen.dart';
 
 class SubjectSelectionScreen extends StatelessWidget {
   const SubjectSelectionScreen({super.key});
@@ -8,15 +9,28 @@ class SubjectSelectionScreen extends StatelessWidget {
   static const subjects = [
     {
       'name': 'Social Studies',
-      'gradient': [AppTheme.auroraBlue, AppTheme.auroraPurple]
+      'gradient': [AppTheme.auroraBlue, AppTheme.auroraPurple],
+      'isComingSoon': false,
     },
     {
       'name': 'Physics',
-      'gradient': [AppTheme.auroraPurple, AppTheme.auroraPink]
+      'gradient': [AppTheme.auroraPurple, AppTheme.auroraPink],
+      'isComingSoon': false,
     },
     {
       'name': 'Biology',
-      'gradient': [AppTheme.auroraPink, AppTheme.auroraGreen]
+      'gradient': [AppTheme.auroraPink, AppTheme.auroraGreen],
+      'isComingSoon': false,
+    },
+    {
+      'name': 'Mathematics',
+      'gradient': [AppTheme.auroraGreen, AppTheme.auroraBlue],
+      'isComingSoon': true,
+    },
+    {
+      'name': 'English',
+      'gradient': [AppTheme.auroraBlue, AppTheme.auroraGreen],
+      'isComingSoon': true,
     },
   ];
 
@@ -53,14 +67,26 @@ class SubjectSelectionScreen extends StatelessWidget {
                 return _SubjectCard(
                   subjectName: s['name'] as String,
                   gradient: s['gradient'] as List<Color>,
+                  isComingSoon: s['isComingSoon'] as bool? ?? false,
                   onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) =>
-                            TopicListScreen(subject: s['name'] as String),
-                      ),
-                    );
+                    if (s['isComingSoon'] as bool? ?? false) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => UnderDevelopmentScreen(
+                            subjectName: s['name'] as String,
+                          ),
+                        ),
+                      );
+                    } else {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              TopicListScreen(subject: s['name'] as String),
+                        ),
+                      );
+                    }
                   },
                 );
               }).toList(),
@@ -76,11 +102,13 @@ class _SubjectCard extends StatefulWidget {
   final String subjectName;
   final List<Color> gradient;
   final VoidCallback onTap;
+  final bool isComingSoon;
 
   const _SubjectCard({
     required this.subjectName,
     required this.gradient,
     required this.onTap,
+    this.isComingSoon = false,
   });
 
   @override
@@ -140,65 +168,111 @@ class _SubjectCardState extends State<_SubjectCard>
         builder: (context, child) {
           return Transform.scale(
             scale: _scaleAnimation.value,
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: widget.gradient,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: widget.gradient.first
-                        .withOpacity(0.3 + _glowAnimation.value * 0.3),
-                    blurRadius: 20 + _glowAnimation.value * 10,
-                    spreadRadius: 2 + _glowAnimation.value * 2,
-                  ),
-                  BoxShadow(
-                    color: widget.gradient.last
-                        .withOpacity(0.2 + _glowAnimation.value * 0.2),
-                    blurRadius: 15 + _glowAnimation.value * 8,
-                    spreadRadius: 1 + _glowAnimation.value * 1,
-                  ),
-                ],
-              ),
+            child: Opacity(
+              opacity: widget.isComingSoon ? 0.7 : 1.0,
               child: Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: Colors.white.withOpacity(0.2),
-                    width: 1,
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: widget.isComingSoon
+                        ? widget.gradient
+                            .map((color) => color.withOpacity(0.6))
+                            .toList()
+                        : widget.gradient,
                   ),
+                  boxShadow: widget.isComingSoon
+                      ? []
+                      : [
+                          BoxShadow(
+                            color: widget.gradient.first
+                                .withOpacity(0.3 + _glowAnimation.value * 0.3),
+                            blurRadius: 20 + _glowAnimation.value * 10,
+                            spreadRadius: 2 + _glowAnimation.value * 2,
+                          ),
+                          BoxShadow(
+                            color: widget.gradient.last
+                                .withOpacity(0.2 + _glowAnimation.value * 0.2),
+                            blurRadius: 15 + _glowAnimation.value * 8,
+                            spreadRadius: 1 + _glowAnimation.value * 1,
+                          ),
+                        ],
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.min,
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: widget.isComingSoon
+                          ? Colors.white.withOpacity(0.1)
+                          : Colors.white.withOpacity(0.2),
+                      width: 1,
+                    ),
+                  ),
+                  child: Stack(
                     children: [
-                      Flexible(
-                        child: Icon(
-                          _getSubjectIcon(widget.subjectName),
-                          size: screenSize.width > 500 ? 40 : 32,
-                          color: Colors.white.withOpacity(0.9),
+                      Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Flexible(
+                              child: Icon(
+                                _getSubjectIcon(widget.subjectName),
+                                size: screenSize.width > 500 ? 40 : 32,
+                                color: Colors.white.withOpacity(
+                                    widget.isComingSoon ? 0.6 : 0.9),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Flexible(
+                              child: Text(
+                                widget.subjectName,
+                                textAlign: TextAlign.center,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(
+                                      widget.isComingSoon ? 0.7 : 1.0),
+                                  fontSize: screenSize.width > 500 ? 16 : 14,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      Flexible(
-                        child: Text(
-                          widget.subjectName,
-                          textAlign: TextAlign.center,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: screenSize.width > 500 ? 16 : 14,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.5,
+                      if (widget.isComingSoon)
+                        Positioned(
+                          top: 8,
+                          right: 8,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: AppTheme.auroraPink.withOpacity(0.9),
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppTheme.auroraPink.withOpacity(0.3),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: const Text(
+                              'Coming Soon',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
                           ),
                         ),
-                      ),
                     ],
                   ),
                 ),
@@ -220,6 +294,10 @@ class _SubjectCardState extends State<_SubjectCard>
         return Icons.science;
       case 'Biology':
         return Icons.biotech;
+      case 'English':
+        return Icons.menu_book;
+      case 'Social Studies':
+        return Icons.public;
       default:
         return Icons.school;
     }
