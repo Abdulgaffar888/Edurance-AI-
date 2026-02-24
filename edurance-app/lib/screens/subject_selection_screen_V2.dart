@@ -4,7 +4,8 @@ import 'topic_list_screen_V2.dart';
 import 'under_development_screen.dart';
 
 class SubjectSelectionScreen extends StatelessWidget {
-  const SubjectSelectionScreen({super.key});
+  final String classLevel;
+  const SubjectSelectionScreen({super.key, required this.classLevel});
 
   static const subjects = [
     {
@@ -38,15 +39,15 @@ class SubjectSelectionScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Choose a Subject'),
+        title: Text('$classLevel — Choose a Subject'),
         backgroundColor: AppTheme.surfaceColor,
+        elevation: 0,
       ),
       backgroundColor: AppTheme.darkBackground,
       body: Padding(
         padding: const EdgeInsets.all(24),
         child: LayoutBuilder(
           builder: (context, constraints) {
-            // Responsive grid for web
             int crossAxisCount = constraints.maxWidth > 800
                 ? 3
                 : constraints.maxWidth > 500
@@ -82,8 +83,10 @@ class SubjectSelectionScreen extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) =>
-                              TopicListScreen(subject: s['name'] as String),
+                          builder: (_) => TopicListScreen(
+                            subject: s['name'] as String,
+                            classLevel: classLevel,
+                          ),
                         ),
                       );
                     }
@@ -129,21 +132,13 @@ class _SubjectCardState extends State<_SubjectCard>
       vsync: this,
     );
 
-    _scaleAnimation = Tween<double>(
-      begin: 1.0,
-      end: 0.95,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut,
-    ));
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
 
-    _glowAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut,
-    ));
+    _glowAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
   }
 
   @override
@@ -186,14 +181,14 @@ class _SubjectCardState extends State<_SubjectCard>
                       ? []
                       : [
                           BoxShadow(
-                            color: widget.gradient.first
-                                .withOpacity(0.3 + _glowAnimation.value * 0.3),
+                            color: widget.gradient.first.withOpacity(
+                                0.3 + _glowAnimation.value * 0.3),
                             blurRadius: 20 + _glowAnimation.value * 10,
                             spreadRadius: 2 + _glowAnimation.value * 2,
                           ),
                           BoxShadow(
-                            color: widget.gradient.last
-                                .withOpacity(0.2 + _glowAnimation.value * 0.2),
+                            color: widget.gradient.last.withOpacity(
+                                0.2 + _glowAnimation.value * 0.2),
                             blurRadius: 15 + _glowAnimation.value * 8,
                             spreadRadius: 1 + _glowAnimation.value * 1,
                           ),

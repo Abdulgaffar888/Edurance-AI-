@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'screens/subject_selection_screen_V2.dart';
+import 'screens/class_selection_screen.dart';
 import 'theme/app_theme.dart';
 
 void main() {
@@ -15,7 +15,7 @@ class EduranceApp extends StatelessWidget {
       title: 'Edurance AI',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
-      home: SubjectSelectionScreen(),
+      home: const ClassSelectionScreen(),
     );
   }
 }
