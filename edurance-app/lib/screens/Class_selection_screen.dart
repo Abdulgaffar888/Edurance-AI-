@@ -6,11 +6,11 @@ class ClassSelectionScreen extends StatelessWidget {
   const ClassSelectionScreen({super.key});
 
   static const classes = [
-    {'level': 'Class 5', 'emoji': '🌱', 'subtitle': 'Foundation Years'},
-    {'level': 'Class 6', 'emoji': '📚', 'subtitle': 'Building Blocks'},
-    {'level': 'Class 7', 'emoji': '🔭', 'subtitle': 'Exploring Ideas'},
-    {'level': 'Class 8', 'emoji': '⚡', 'subtitle': 'Gaining Momentum'},
-    {'level': 'Class 9', 'emoji': '🚀', 'subtitle': 'Pre-Board Prep'},
+    {'level': 'Class 5', 'emoji': '🌱', 'subtitle': 'Foundation Years', 'active': true},
+    {'level': 'Class 6', 'emoji': '📚', 'subtitle': 'Building Blocks', 'active': true},
+    {'level': 'Class 7', 'emoji': '🔭', 'subtitle': 'Exploring Ideas', 'active': true},
+    {'level': 'Class 8', 'emoji': '⚡', 'subtitle': 'Coming Soon', 'active': false},
+    {'level': 'Class 9', 'emoji': '🚀', 'subtitle': 'Coming Soon', 'active': false},
   ];
 
   static const List<List<Color>> gradients = [
@@ -32,7 +32,6 @@ class ClassSelectionScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 24),
-              // Header
               Row(
                 children: [
                   Container(
@@ -78,28 +77,29 @@ class ClassSelectionScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 32),
-              // Class Cards
               Expanded(
                 child: ListView.builder(
                   itemCount: classes.length,
                   itemBuilder: (context, index) {
                     final cls = classes[index];
                     final gradient = gradients[index % gradients.length];
+                    final isActive = cls['active'] as bool;
                     return _ClassCard(
-                      classLevel: cls['level']!,
-                      emoji: cls['emoji']!,
-                      subtitle: cls['subtitle']!,
+                      classLevel: cls['level']! as String,
+                      emoji: cls['emoji']! as String,
+                      subtitle: cls['subtitle']! as String,
                       gradient: gradient,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => SubjectSelectionScreen(
-                              classLevel: cls['level']!,
-                            ),
-                          ),
-                        );
-                      },
+                      isActive: isActive,
+                      onTap: isActive
+                          ? () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => SubjectSelectionScreen(
+                                    classLevel: cls['level']! as String,
+                                  ),
+                                ),
+                              )
+                          : null,
                     );
                   },
                 ),
@@ -117,13 +117,15 @@ class _ClassCard extends StatefulWidget {
   final String emoji;
   final String subtitle;
   final List<Color> gradient;
-  final VoidCallback onTap;
+  final bool isActive;
+  final VoidCallback? onTap;
 
   const _ClassCard({
     required this.classLevel,
     required this.emoji,
     required this.subtitle,
     required this.gradient,
+    required this.isActive,
     required this.onTap,
   });
 
@@ -140,12 +142,9 @@ class _ClassCardState extends State<_ClassCard>
   void initState() {
     super.initState();
     _ctrl = AnimationController(
-      duration: const Duration(milliseconds: 150),
-      vsync: this,
-    );
+        duration: const Duration(milliseconds: 150), vsync: this);
     _scale = Tween<double>(begin: 1.0, end: 0.97).animate(
-      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
-    );
+        CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
   }
 
   @override
@@ -157,17 +156,20 @@ class _ClassCardState extends State<_ClassCard>
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTapDown: (_) => _ctrl.forward(),
-      onTapUp: (_) {
-        _ctrl.reverse();
-        widget.onTap();
-      },
-      onTapCancel: () => _ctrl.reverse(),
+      onTapDown: widget.isActive ? (_) => _ctrl.forward() : null,
+      onTapUp: widget.isActive
+          ? (_) {
+              _ctrl.reverse();
+              widget.onTap?.call();
+            }
+          : null,
+      onTapCancel: widget.isActive ? () => _ctrl.reverse() : null,
       child: AnimatedBuilder(
         animation: _ctrl,
-        builder: (context, _) {
-          return Transform.scale(
-            scale: _scale.value,
+        builder: (context, _) => Transform.scale(
+          scale: _scale.value,
+          child: Opacity(
+            opacity: widget.isActive ? 1.0 : 0.45,
             child: Container(
               margin: const EdgeInsets.only(bottom: 16),
               height: 90,
@@ -178,29 +180,27 @@ class _ClassCardState extends State<_ClassCard>
                   end: Alignment.centerRight,
                   colors: widget.gradient,
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: widget.gradient.first.withOpacity(0.25),
-                    blurRadius: 16,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
+                boxShadow: widget.isActive
+                    ? [
+                        BoxShadow(
+                          color: widget.gradient.first.withOpacity(0.25),
+                          blurRadius: 16,
+                          offset: const Offset(0, 4),
+                        )
+                      ]
+                    : [],
               ),
               child: Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: Colors.white.withOpacity(0.15),
-                    width: 1,
-                  ),
+                      color: Colors.white.withOpacity(0.15), width: 1),
                 ),
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Row(
                   children: [
-                    Text(
-                      widget.emoji,
-                      style: const TextStyle(fontSize: 32),
-                    ),
+                    Text(widget.emoji,
+                        style: const TextStyle(fontSize: 32)),
                     const SizedBox(width: 20),
                     Expanded(
                       child: Column(
@@ -213,7 +213,6 @@ class _ClassCardState extends State<_ClassCard>
                               color: Colors.white,
                               fontSize: 18,
                               fontWeight: FontWeight.w700,
-                              letterSpacing: 0.3,
                             ),
                           ),
                           const SizedBox(height: 3),
@@ -222,31 +221,44 @@ class _ClassCardState extends State<_ClassCard>
                             style: TextStyle(
                               color: Colors.white.withOpacity(0.75),
                               fontSize: 13,
-                              fontWeight: FontWeight.w400,
                             ),
                           ),
                         ],
                       ),
                     ),
-                    Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(10),
+                    if (!widget.isActive)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Text(
+                          'Coming Soon',
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600),
+                        ),
+                      )
+                    else
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(Icons.arrow_forward_ios,
+                            color: Colors.white, size: 14),
                       ),
-                      child: const Icon(
-                        Icons.arrow_forward_ios,
-                        color: Colors.white,
-                        size: 14,
-                      ),
-                    ),
                   ],
                 ),
               ),
             ),
-          );
-        },
+          ),
+        ),
       ),
     );
   }

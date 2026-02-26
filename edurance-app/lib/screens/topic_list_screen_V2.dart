@@ -12,167 +12,126 @@ class TopicListScreen extends StatelessWidget {
     required this.classLevel,
   });
 
-  // Topics organized by class → subject
   static const Map<String, Map<String, List<String>>> topicsByClass = {
+    // ─────────────────────────────────────────
+    // CLASS 5
+    // ─────────────────────────────────────────
     'Class 5': {
-      'social studies': [
-        'Our Environment - Chapter 1 (Land, Water, Air)',
-        'Maps and Directions - Chapter 2 (Types of maps, Compass)',
-        'Natural Vegetation - Chapter 3 (Forests, Grasslands, Deserts)',
-        'Wildlife Conservation - Chapter 4 (National parks, Endangered species)',
-        'Our Country India - Chapter 5 (States, Union territories, Capital)',
-      ],
-      'physics': [
-        'Force and Energy - Chapter 1 (Types of force, Work)',
-        'Simple Machines - Chapter 2 (Lever, Pulley, Inclined plane)',
-        'Light and Shadow - Chapter 3 (Reflection, Sources of light)',
-        'Matter and Materials - Chapter 4 (Solids, Liquids, Gases)',
-        'Electricity - Chapter 5 (Circuit, Conductors, Insulators)',
-      ],
-      'biology': [
-        'Plants - Chapter 1 (Parts of plant, Photosynthesis basics)',
-        'Animals - Chapter 2 (Habitats, Food chains)',
-        'Human Body - Chapter 3 (Organs, Senses)',
-        'Food and Nutrition - Chapter 4 (Nutrients, Balanced diet)',
-        'Health and Hygiene - Chapter 5 (Disease prevention)',
+      'evs': [
+        'Animals - The Base of our life',
+        'Agriculture - Crops',
+        'Let\'s Grow Trees',
+        'Nutritious Food',
+        'Our Body Parts - Sense Organs',
+        'Our Body - Its Internal Organ System',
+        'Forests - Tribals',
+        'Rivers - Means of Livelihood',
+        'Atmosphere - Wind',
+        'The Sun and The Planets',
+        'Safety and First Aid',
+        'Historical Sites - Wanaparthy Fort',
+        'Energy',
+        'Our Country - World',
+        'Our Constitution',
+        'Child Rights',
       ],
     },
+
+    // ─────────────────────────────────────────
+    // CLASS 6
+    // ─────────────────────────────────────────
     'Class 6': {
+      'general science': [
+        'Our food',
+        'Playing with magnets',
+        'Rain: where does it come from?',
+        'What do animals eat?',
+        'Materials - Objects',
+        'Habitat',
+        'Separation of Substances',
+        'Fibre to Fabric',
+        'Plants: parts and functions',
+        'Changes around us',
+        'Water in our life',
+        'Simple electric circuits',
+        'Learning how to measure',
+        'Movements in animals',
+        'Light, Shadows and Images',
+        'Living and non living',
+      ],
       'social studies': [
-        'The Earth in the Solar System - Chapter 1 (Planets, Sun, Moon)',
-        'Globe and Maps - Chapter 2 (Latitudes, Longitudes)',
-        'Motions of the Earth - Chapter 3 (Rotation, Revolution, Seasons)',
-        'Major Domains of the Earth - Chapter 4 (Lithosphere, Hydrosphere)',
-        'Major Landforms - Chapter 5 (Mountains, Plateaus, Plains)',
-        'Our Country India - Chapter 6 (Location, Physical features)',
-        'India: Climate, Vegetation and Wildlife - Chapter 7',
-      ],
-      'physics': [
-        'Food: Where Does It Come From? - Chapter 1',
-        'Components of Food - Chapter 2 (Nutrients, Deficiency diseases)',
-        'Motion and Measurement - Chapter 3 (Types of motion)',
-        'Light, Shadows and Reflections - Chapter 4',
-        'Electricity and Circuits - Chapter 5',
-        'Magnets - Chapter 6 (Properties, Uses)',
-      ],
-      'biology': [
-        'Getting to Know Plants - Chapter 1 (Herbs, Shrubs, Trees)',
-        'Body Movements - Chapter 2 (Joints, Skeleton)',
-        'Living Organisms and Surroundings - Chapter 3 (Habitat, Adaptation)',
-        'Changes Around Us - Chapter 4 (Reversible, Irreversible)',
-        'Garbage In, Garbage Out - Chapter 5 (Waste management)',
+        'Reading and Making Maps',
+        'Globe – A Model of the earth',
+        'Land Forms (Part - A)',
+        'Penamakuru – A Village in the Krishna Delta (Part - B)',
+        'Dokur – A Village on the Plateau',
+        'Penugolu – A Village on the Hills',
+        'From Gathering Food to Growing Food – The Earliest People',
+        'Agriculture in Our Times',
+        'Trade in Agricultural Produce – Part - A',
+        'Trade in Agricultural Produce – Part - B',
+        'Community Decision Making in a Tribe',
+        'Emergence of Kingdoms and Republics',
+        'First Empires',
+        'Democratic Government',
+        'Village Panchayats',
+        'Local Self – Government in Urban Areas',
+        'Diversity in our Society',
+        'Towards gender equality',
+        'Religion and society in early times',
+        'Devotion and love towards god',
+        'Language, Script and Scriptures',
+        'Sculptures and Buildings',
+        'Greenery in Telangana',
       ],
     },
+
+    // ─────────────────────────────────────────
+    // CLASS 7
+    // ─────────────────────────────────────────
     'Class 7': {
+      'general science': [
+        'Food Components',
+        'Acids and Bases',
+        'Silk - Wool',
+        'Motion - Time',
+        'Heat - Measurement',
+        'Weather - Climate',
+        'Electric Current - Its Effect',
+        'Air, Winds and Cyclones',
+        'Reflection of Light',
+        'Nutrition in Plants',
+        'Respiration in Organisms',
+        'Reproduction in Plants',
+        'Seed Dispersal',
+        'Water - Too Little to Waste',
+        'Soil - Our Life',
+        'Forest - Our Life',
+        'Changes Around Us',
+      ],
       'social studies': [
-        'Environment - Chapter 1 (Natural and Human-made)',
-        'Inside Our Earth - Chapter 2 (Layers, Rocks, Minerals)',
-        'Our Changing Earth - Chapter 3 (Earthquakes, Volcanoes)',
-        'Air - Chapter 4 (Atmosphere, Weather, Climate)',
-        'Water - Chapter 5 (Distribution, Ocean circulation)',
-        'Natural Vegetation and Wildlife - Chapter 6',
-        'Human Environment - Chapter 7 (Tribes, Nomads, Communities)',
-        'Human Environment Interactions - Chapter 8 (Amazon basin, Ganga plains)',
-      ],
-      'physics': [
-        'Nutrition in Plants - Chapter 1 (Photosynthesis, Parasitic plants)',
-        'Nutrition in Animals - Chapter 2 (Digestive system)',
-        'Heat - Chapter 3 (Temperature, Conduction, Convection)',
-        'Acids, Bases and Salts - Chapter 4 (Properties, Indicators)',
-        'Physical and Chemical Changes - Chapter 5',
-        'Light - Chapter 6 (Reflection, Plane mirror)',
-        'Electric Current and Effects - Chapter 7',
-        'Motion and Time - Chapter 8 (Speed, Distance-time graphs)',
-      ],
-      'biology': [
-        'Respiration in Organisms - Chapter 1 (Aerobic, Anaerobic)',
-        'Transportation in Animals and Plants - Chapter 2',
-        'Reproduction in Plants - Chapter 3 (Asexual, Sexual)',
-        'Forests: Our Lifeline - Chapter 4',
-        'Wastewater Management - Chapter 5',
-        'Weather, Climate and Adaptations - Chapter 6',
-      ],
-    },
-    'Class 8': {
-      'social studies': [
-        'Resources - Chapter 1 (Types, Conservation)',
-        'Land, Soil, Water, Natural Vegetation - Chapter 2',
-        'Mineral and Power Resources - Chapter 3',
-        'Agriculture - Chapter 4 (Types of farming, Crops)',
-        'Industries - Chapter 5 (Iron, Steel, IT)',
-        'Human Resources - Chapter 6 (Population distribution)',
-        'The Indian Constitution - Chapter 7',
-        'Understanding Laws - Chapter 8',
-        'Judiciary - Chapter 9 (Courts, Rights)',
-      ],
-      'physics': [
-        'Crop Production and Management - Chapter 1',
-        'Combustion and Flame - Chapter 2 (Types, Fire extinguisher)',
-        'Force and Pressure - Chapter 3 (Contact/Non-contact forces)',
-        'Friction - Chapter 4 (Types, Uses, Reducing friction)',
-        'Sound - Chapter 5 (Vibration, Properties, Noise pollution)',
-        'Chemical Effects of Electric Current - Chapter 6',
-        'Some Natural Phenomena - Chapter 7 (Lightning, Earthquakes)',
-        'Light - Chapter 8 (Laws of reflection, Eye)',
-      ],
-      'biology': [
-        'Microorganisms - Chapter 1 (Friend and Foe)',
-        'Cell — Structure and Functions - Chapter 2',
-        'Reproduction in Animals - Chapter 3',
-        'Reaching the Age of Adolescence - Chapter 4',
-        'Conservation of Plants and Animals - Chapter 5',
-        'Pollution of Air and Water - Chapter 6',
-      ],
-    },
-    'Class 9': {
-      'social studies': [
-        'India: Relief Features - Chapter 1 (Himalayas, Indo-Gangetic plains, Peninsular plateau)',
-        'Ideas on Development - Chapter 2 (HDI, Income vs Goals, Public facilities)',
-        'Production and Employment - Chapter 3 (Sectors of economy, GDP, Organized/Unorganized)',
-        'Climate of India - Chapter 4 (Monsoons, Climatic controls, Global warming)',
-        'Indian Rivers and Water Resources - Chapter 5 (Himalayan/Peninsular rivers, Water usage)',
-        'The People - Chapter 6 (Census, Population change, Literacy rates)',
-        'Settlement and Migration - Chapter 7 (Urbanization, Internal/International migration)',
-        'Rampur: A Village Economy - Chapter 8 (Land distribution, Non-farm activities)',
-        'Globalization - Chapter 9 (MNCs, Trade barriers, WTO impact)',
-        'Food Security - Chapter 10 (PDS, Nutrition status, Buffer stock)',
-        'Sustainable Development with Equity - Chapter 11 (Environment vs Growth)',
-        'The World Between Wars - Chapter 12 (World War I & II, Great Depression)',
-        'National Liberation Movements in Colonies - Chapter 13 (China, Vietnam, Nigeria)',
-        'National Movement in India - Chapter 14 (Quit India, Partition, Role of Gandhi)',
-        'The Making of Independent India\'s Constitution - Chapter 15',
-        'The Election Process in India - Chapter 16',
-        'Independent India (First 30 Years) - Chapter 17',
-        'Emerging Political Trends (1977-2000) - Chapter 18',
-        'Post-War World and India - Chapter 19 (Cold war, Non-Aligned Movement)',
-        'Social Movements in Our Times - Chapter 20',
-        'The Movement for the Formation of Telangana State - Chapter 21',
-      ],
-      'physics': [
-        'Reflection of Light at Curved Surfaces - Chapter 1 (Spherical mirrors, Ray diagrams)',
-        'Chemical Equations - Chapter 2 (Types of reactions, Balancing)',
-        'Acids, Bases and Salts - Chapter 3 (pH Scale, Indicators)',
-        'Refraction of Light at Curved Surfaces - Chapter 4 (Lenses)',
-        'The Human Eye and the Colourful World - Chapter 5 (Dispersion, Scattering)',
-        'Structure of Atom - Chapter 6 (Spectrum, Quantum numbers)',
-        'Classification of Elements - The Periodic Table - Chapter 7',
-        'Chemical Bonding - Chapter 8 (Ionic and Covalent bonding)',
-        'Electric Current - Chapter 9 (Ohm\'s Law, Kirchhoff\'s Laws)',
-        'Electromagnetism - Chapter 10 (Magnetic field, Induction)',
-        'Principles of Metallurgy - Chapter 11',
-        'Carbon and its Compounds - Chapter 12',
-      ],
-      'biology': [
-        'Nutrition - Chapter 1 (Photosynthesis, Digestive system)',
-        'Respiration - Chapter 2 (Aerobic/Anaerobic, Human respiratory system)',
-        'Transportation - Chapter 3 (Heart structure, Blood vessels)',
-        'Excretion - Chapter 4 (Nephron, Kidney transplantation)',
-        'Coordination - Chapter 5 (Nervous system, Brain, Plant hormones)',
-        'Reproduction - Chapter 6 (Asexual/Sexual, Flower structure)',
-        'Coordination in Life Processes - Chapter 7',
-        'Heredity and Evolution - Chapter 8 (Mendel\'s laws, Sex determination)',
-        'Our Environment - Chapter 9 (Food chains, Ecological pyramids)',
-        'Natural Resources - Chapter 10 (Conservation, Soil/Water management)',
+        'Reading Maps of Different kinds',
+        'Rain and Rivers',
+        'Tanks and Ground Water',
+        'Oceans and Fishing',
+        'Europe',
+        'Africa',
+        'Handicrafts and Handlooms',
+        'Industrial Revolution',
+        'Production in a Factory – A Paper Mill',
+        'Importance of Transport System',
+        'New Kings and Kingdoms',
+        'The Kakatiyas – Emergence of a Regional Kingdom',
+        'The Kings of Vijayanagara',
+        'Mughal Empire',
+        'Establishment of the British Empire in India',
+        'Making of Laws in the State Assembly',
+        'Implementation of Laws in the District',
+        'Caste Discrimination and the Struggle for Equalities',
+        'Livelihood and Struggles of Urban Workers',
+        'Folk – Religion',
+        'Devotional Paths to the Divine',
+        'Rulers and Buildings',
       ],
     },
   };
@@ -180,7 +139,6 @@ class TopicListScreen extends StatelessWidget {
   List<String>? _getTopics() {
     final classData = topicsByClass[classLevel];
     if (classData == null) return null;
-
     final key = subject.toLowerCase().trim();
     return classData[key];
   }
@@ -207,9 +165,7 @@ class TopicListScreen extends StatelessWidget {
                   Text(
                     'No topics found for "$subject" in $classLevel',
                     style: const TextStyle(
-                      fontSize: 16,
-                      color: AppTheme.secondaryText,
-                    ),
+                        fontSize: 16, color: AppTheme.secondaryText),
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -219,23 +175,20 @@ class TopicListScreen extends StatelessWidget {
               padding: const EdgeInsets.all(16),
               child: ListView.builder(
                 itemCount: list.length,
-                itemBuilder: (context, i) {
-                  return _TopicCard(
-                    topicText: list[i],
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => SlidePresentationScreen(
-                            subject: subject,
-                            topic: list[i],
-                            classLevel: classLevel,
-                          ),
-                        ),
-                      );
-                    },
-                  );
-                },
+                itemBuilder: (context, i) => _TopicCard(
+                  topicText: list[i],
+                  index: i,
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => SlidePresentationScreen(
+                        subject: subject,
+                        topic: list[i],
+                        classLevel: classLevel,
+                      ),
+                    ),
+                  ),
+                ),
               ),
             ),
     );
@@ -244,9 +197,14 @@ class TopicListScreen extends StatelessWidget {
 
 class _TopicCard extends StatefulWidget {
   final String topicText;
+  final int index;
   final VoidCallback onTap;
 
-  const _TopicCard({required this.topicText, required this.onTap});
+  const _TopicCard({
+    required this.topicText,
+    required this.index,
+    required this.onTap,
+  });
 
   @override
   State<_TopicCard> createState() => _TopicCardState();
@@ -254,89 +212,91 @@ class _TopicCard extends StatefulWidget {
 
 class _TopicCardState extends State<_TopicCard>
     with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
-  late Animation<double> _scaleAnimation;
+  late AnimationController _ctrl;
+  late Animation<double> _scale;
 
   @override
   void initState() {
     super.initState();
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 150),
-      vsync: this,
-    );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.98).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
-    );
+    _ctrl = AnimationController(
+        duration: const Duration(milliseconds: 150), vsync: this);
+    _scale = Tween<double>(begin: 1.0, end: 0.98)
+        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
   }
 
   @override
   void dispose() {
-    _animationController.dispose();
+    _ctrl.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTapDown: (_) => _animationController.forward(),
+      onTapDown: (_) => _ctrl.forward(),
       onTapUp: (_) {
-        _animationController.reverse();
+        _ctrl.reverse();
         widget.onTap();
       },
-      onTapCancel: () => _animationController.reverse(),
+      onTapCancel: () => _ctrl.reverse(),
       child: AnimatedBuilder(
-        animation: _animationController,
-        builder: (context, child) {
-          return Transform.scale(
-            scale: _scaleAnimation.value,
-            child: Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              decoration: BoxDecoration(
-                color: AppTheme.cardBackground,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 4,
-                      height: 24,
-                      decoration: BoxDecoration(
-                        color: AppTheme.auroraGreen,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
+        animation: _ctrl,
+        builder: (_, __) => Transform.scale(
+          scale: _scale.value,
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            decoration: BoxDecoration(
+              color: AppTheme.cardBackground,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Container(
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      color: AppTheme.auroraGreen.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    const SizedBox(width: 16),
-                    Expanded(
+                    child: Center(
                       child: Text(
-                        widget.topicText,
+                        '${widget.index + 1}',
                         style: const TextStyle(
-                          color: AppTheme.primaryText,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w500,
-                          height: 1.4,
+                          color: AppTheme.auroraGreen,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ),
-                    const Icon(
-                      Icons.arrow_forward_ios,
-                      size: 14,
-                      color: AppTheme.secondaryText,
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Text(
+                      widget.topicText,
+                      style: const TextStyle(
+                        color: AppTheme.primaryText,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        height: 1.4,
+                      ),
                     ),
-                  ],
-                ),
+                  ),
+                  const Icon(Icons.arrow_forward_ios,
+                      size: 14, color: AppTheme.secondaryText),
+                ],
               ),
             ),
-          );
-        },
+          ),
+        ),
       ),
     );
   }

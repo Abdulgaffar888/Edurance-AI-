@@ -9,8 +9,13 @@ import 'package:http/http.dart' as http;
 class SlideData {
   final String title;
   final List<String> content;
+  final String? teacherNote;
 
-  SlideData({required this.title, required this.content});
+  SlideData({
+    required this.title,
+    required this.content,
+    this.teacherNote,
+  });
 
   factory SlideData.fromJson(Map<String, dynamic> json) {
     final rawContent = json['content'];
@@ -28,6 +33,7 @@ class SlideData {
     return SlideData(
       title: json['title']?.toString() ?? 'Slide',
       content: contentList,
+      teacherNote: json['teacherNote']?.toString(),
     );
   }
 }
@@ -57,6 +63,7 @@ class _SlidePresentationScreenState extends State<SlidePresentationScreen>
   List<SlideData> _slides = [];
   int _currentIndex = 0;
   bool _loading = true;
+  bool _showTeacherNote = false;
   String? _error;
 
   late AnimationController _fadeCtrl;
@@ -92,7 +99,8 @@ class _SlidePresentationScreenState extends State<SlidePresentationScreen>
       vsync: this,
       duration: const Duration(milliseconds: 400),
     );
-    _progressAnim = CurvedAnimation(parent: _progressCtrl, curve: Curves.easeInOut);
+    _progressAnim =
+        CurvedAnimation(parent: _progressCtrl, curve: Curves.easeInOut);
 
     _fetchSlides();
   }
@@ -124,7 +132,7 @@ class _SlidePresentationScreenState extends State<SlidePresentationScreen>
           "subject": widget.subject,
           "topic": widget.topic,
           "classLevel": widget.classLevel,
-          "mode": "slides", // tells backend to return structured slides
+          "mode": "slides",
           "message": null,
         }),
       );
@@ -134,18 +142,15 @@ class _SlidePresentationScreenState extends State<SlidePresentationScreen>
 
         List<SlideData> parsed = [];
 
-        // Try to parse slides array from backend
         if (data['slides'] != null && data['slides'] is List) {
           parsed = (data['slides'] as List)
               .map((s) => SlideData.fromJson(s as Map<String, dynamic>))
               .toList();
         } else if (data['reply'] != null) {
-          // Fallback: parse the reply text into slides
           parsed = _parseReplyToSlides(data['reply'].toString());
         }
 
         if (parsed.isEmpty) {
-          // Final fallback: create placeholder slides
           parsed = _generateFallbackSlides();
         }
 
@@ -153,6 +158,7 @@ class _SlidePresentationScreenState extends State<SlidePresentationScreen>
           _slides = parsed;
           _loading = false;
           _currentIndex = 0;
+          _showTeacherNote = false;
         });
         _playTransition();
         _updateProgress();
@@ -170,7 +176,6 @@ class _SlidePresentationScreenState extends State<SlidePresentationScreen>
     }
   }
 
-  // Parse plain text reply into slide objects
   List<SlideData> _parseReplyToSlides(String text) {
     final slides = <SlideData>[];
     final sections = text.split(RegExp(r'\n(?=[A-Z#])'));
@@ -213,7 +218,10 @@ class _SlidePresentationScreenState extends State<SlidePresentationScreen>
           'Welcome to this lesson on ${widget.topic}.',
           'We will explore the key concepts step by step.',
           'Take notes and ask questions as we go.',
+          'By the end, you will be confident for your exams.',
         ],
+        teacherNote:
+            'Welcome class! Today we are going to explore ${widget.topic}. This is an important topic in your syllabus and I want you to pay close attention. Let\'s begin!',
       ),
       SlideData(
         title: 'Key Concepts',
@@ -221,15 +229,21 @@ class _SlidePresentationScreenState extends State<SlidePresentationScreen>
           'This topic covers important ideas in ${widget.subject}.',
           'Each concept builds on the previous one.',
           'Understanding these will help you excel in your class.',
+          'Connect what you learn here to real life situations around you.',
         ],
+        teacherNote:
+            'Now, think about it this way — every concept we cover today is connected. Once you understand the foundation, everything else will fall into place naturally.',
       ),
       SlideData(
-        title: 'Summary',
+        title: 'Summary & Exam Tips',
         content: [
           'You have completed this lesson on ${widget.topic}.',
           'Review the key points before moving on.',
           'Practice questions will help reinforce your learning.',
+          'In your exam, always write definitions clearly and give examples.',
         ],
+        teacherNote:
+            'Excellent work today! In your exam, remember to always write full sentences in descriptive answers. Do not just write keywords. And always give one real-life example to score bonus marks.',
       ),
     ];
   }
@@ -246,7 +260,10 @@ class _SlidePresentationScreenState extends State<SlidePresentationScreen>
 
   void _goNext() {
     if (_currentIndex < _slides.length - 1) {
-      setState(() => _currentIndex++);
+      setState(() {
+        _currentIndex++;
+        _showTeacherNote = false;
+      });
       _playTransition();
       _updateProgress();
     }
@@ -254,7 +271,10 @@ class _SlidePresentationScreenState extends State<SlidePresentationScreen>
 
   void _goPrev() {
     if (_currentIndex > 0) {
-      setState(() => _currentIndex--);
+      setState(() {
+        _currentIndex--;
+        _showTeacherNote = false;
+      });
       _playTransition();
       _updateProgress();
     }
@@ -262,7 +282,10 @@ class _SlidePresentationScreenState extends State<SlidePresentationScreen>
 
   void _goToSlide(int index) {
     if (index >= 0 && index < _slides.length && index != _currentIndex) {
-      setState(() => _currentIndex = index);
+      setState(() {
+        _currentIndex = index;
+        _showTeacherNote = false;
+      });
       _playTransition();
       _updateProgress();
     }
@@ -516,180 +539,304 @@ class _SlidePresentationScreenState extends State<SlidePresentationScreen>
   // ── Slide canvas ─────────────────────────────
   Widget _buildSlideCanvas() {
     final slide = _slides[_currentIndex];
+    final hasNote =
+        slide.teacherNote != null && slide.teacherNote!.isNotEmpty;
 
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Center(
-        child: AspectRatio(
-          aspectRatio: 16 / 9,
-          child: FadeTransition(
-            opacity: _fadeAnim,
-            child: SlideTransition(
-              position: _slideAnim,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: const Color(0xFF13131F),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: const Color(0xFF00D4FF).withOpacity(0.15),
-                    width: 1,
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      child: FadeTransition(
+        opacity: _fadeAnim,
+        child: SlideTransition(
+          position: _slideAnim,
+          child: Column(
+            children: [
+              // ── Main slide card (16:9) ──
+              AspectRatio(
+                aspectRatio: 16 / 9,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF13131F),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: const Color(0xFF00D4FF).withOpacity(0.15),
+                      width: 1,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF00D4FF).withOpacity(0.08),
+                        blurRadius: 40,
+                        spreadRadius: 0,
+                      ),
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.5),
+                        blurRadius: 20,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF00D4FF).withOpacity(0.08),
-                      blurRadius: 40,
-                      spreadRadius: 0,
-                    ),
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.5),
-                      blurRadius: 20,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
-                child: Stack(
-                  children: [
-                    // Background accent
-                    Positioned(
-                      top: -40,
-                      right: -40,
-                      child: Container(
-                        width: 200,
-                        height: 200,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: RadialGradient(
-                            colors: [
-                              const Color(0xFF00D4FF).withOpacity(0.05),
-                              Colors.transparent,
-                            ],
+                  child: Stack(
+                    children: [
+                      // Background accent glow
+                      Positioned(
+                        top: -40,
+                        right: -40,
+                        child: Container(
+                          width: 200,
+                          height: 200,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: RadialGradient(
+                              colors: [
+                                const Color(0xFF00D4FF).withOpacity(0.05),
+                                Colors.transparent,
+                              ],
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    // Slide number pill
-                    Positioned(
-                      bottom: 16,
-                      right: 20,
-                      child: Text(
-                        '${_currentIndex + 1}',
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.2),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
+                      // Slide number
+                      Positioned(
+                        bottom: 16,
+                        right: 20,
+                        child: Text(
+                          '${_currentIndex + 1}',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.2),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
-                    ),
-                    // Content
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(36, 32, 36, 40),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Title
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 5),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF00D4FF).withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(6),
-                              border: Border.all(
+                      // Slide content
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(36, 28, 36, 36),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Subject pill
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 5),
+                              decoration: BoxDecoration(
                                 color:
-                                    const Color(0xFF00D4FF).withOpacity(0.2),
-                                width: 1,
+                                    const Color(0xFF00D4FF).withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(
+                                  color: const Color(0xFF00D4FF)
+                                      .withOpacity(0.2),
+                                ),
+                              ),
+                              child: Text(
+                                widget.subject.toUpperCase(),
+                                style: const TextStyle(
+                                  color: Color(0xFF00D4FF),
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 1.5,
+                                ),
                               ),
                             ),
-                            child: Text(
-                              widget.subject.toUpperCase(),
+                            const SizedBox(height: 12),
+                            // Title
+                            Text(
+                              slide.title,
                               style: const TextStyle(
-                                color: Color(0xFF00D4FF),
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 1.5,
+                                color: Colors.white,
+                                fontSize: 22,
+                                fontWeight: FontWeight.w800,
+                                height: 1.2,
+                                letterSpacing: -0.3,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 6),
+                            Container(
+                              height: 2,
+                              width: 40,
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [
+                                    Color(0xFF00D4FF),
+                                    Color(0xFF7C3AED),
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(1),
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 14),
-                          Text(
-                            slide.title,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 22,
-                              fontWeight: FontWeight.w800,
-                              height: 1.2,
-                              letterSpacing: -0.3,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 4),
-                          Container(
-                            height: 2,
-                            width: 40,
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [
-                                  Color(0xFF00D4FF),
-                                  Color(0xFF7C3AED),
-                                ],
-                              ),
-                              borderRadius: BorderRadius.circular(1),
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          // Bullet points
-                          Expanded(
-                            child: SingleChildScrollView(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: slide.content.map((point) {
-                                  return Padding(
-                                    padding:
-                                        const EdgeInsets.only(bottom: 14),
-                                    child: Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Padding(
-                                          padding:
-                                              const EdgeInsets.only(top: 6),
-                                          child: Container(
-                                            width: 6,
-                                            height: 6,
-                                            decoration: BoxDecoration(
-                                              shape: BoxShape.circle,
-                                              color: const Color(0xFF00D4FF)
-                                                  .withOpacity(0.8),
+                            const SizedBox(height: 16),
+                            // Bullet points
+                            Expanded(
+                              child: SingleChildScrollView(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: slide.content.map((point) {
+                                    return Padding(
+                                      padding:
+                                          const EdgeInsets.only(bottom: 12),
+                                      child: Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                                top: 7),
+                                            child: Container(
+                                              width: 6,
+                                              height: 6,
+                                              decoration: BoxDecoration(
+                                                shape: BoxShape.circle,
+                                                color: const Color(0xFF00D4FF)
+                                                    .withOpacity(0.8),
+                                              ),
                                             ),
                                           ),
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Expanded(
-                                          child: Text(
-                                            point,
-                                            style: TextStyle(
-                                              color: Colors.white
-                                                  .withOpacity(0.85),
-                                              fontSize: 14,
-                                              height: 1.6,
-                                              fontWeight: FontWeight.w400,
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: Text(
+                                              point,
+                                              style: TextStyle(
+                                                color: Colors.white
+                                                    .withOpacity(0.85),
+                                                fontSize: 13.5,
+                                                height: 1.6,
+                                                fontWeight: FontWeight.w400,
+                                              ),
                                             ),
                                           ),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                }).toList(),
+                                        ],
+                                      ),
+                                    );
+                                  }).toList(),
+                                ),
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
+
+              // ── Teacher Note Panel ──
+              if (hasNote) ...[
+                const SizedBox(height: 12),
+                GestureDetector(
+                  onTap: () =>
+                      setState(() => _showTeacherNote = !_showTeacherNote),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: _showTeacherNote
+                          ? const Color(0xFF1A1228)
+                          : const Color(0xFF13131F),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: const Color(0xFF7C3AED).withOpacity(
+                            _showTeacherNote ? 0.5 : 0.25),
+                      ),
+                      boxShadow: _showTeacherNote
+                          ? [
+                              BoxShadow(
+                                color: const Color(0xFF7C3AED)
+                                    .withOpacity(0.08),
+                                blurRadius: 20,
+                              )
+                            ]
+                          : null,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Header row
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF7C3AED)
+                                    .withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: const [
+                                  Text('🎓',
+                                      style: TextStyle(fontSize: 12)),
+                                  SizedBox(width: 6),
+                                  Text(
+                                    "TEACHER'S EXPLANATION",
+                                    style: TextStyle(
+                                      color: Color(0xFFAB7BFF),
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: 1,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Spacer(),
+                            AnimatedRotation(
+                              turns: _showTeacherNote ? 0.5 : 0,
+                              duration: const Duration(milliseconds: 300),
+                              child: const Icon(
+                                Icons.keyboard_arrow_down,
+                                color: Color(0xFFAB7BFF),
+                                size: 20,
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        // Note text
+                        AnimatedCrossFade(
+                          duration: const Duration(milliseconds: 250),
+                          crossFadeState: _showTeacherNote
+                              ? CrossFadeState.showSecond
+                              : CrossFadeState.showFirst,
+                          firstChild: Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: Text(
+                              slide.teacherNote!.length > 90
+                                  ? '${slide.teacherNote!.substring(0, 90)}...'
+                                  : slide.teacherNote!,
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.38),
+                                fontSize: 12,
+                                height: 1.5,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          secondChild: Padding(
+                            padding: const EdgeInsets.only(top: 12),
+                            child: Text(
+                              slide.teacherNote!,
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.82),
+                                fontSize: 14,
+                                height: 1.75,
+                                fontWeight: FontWeight.w400,
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+
+              const SizedBox(height: 8),
+            ],
           ),
         ),
       ),
@@ -789,14 +936,16 @@ class _SlidePresentationScreenState extends State<SlidePresentationScreen>
                                   Color(0xFF7C3AED),
                                 ],
                               ),
-                        color: isLast ? Colors.white.withOpacity(0.07) : null,
+                        color: isLast
+                            ? Colors.white.withOpacity(0.07)
+                            : null,
                         borderRadius: BorderRadius.circular(14),
                         boxShadow: isLast
                             ? null
                             : [
                                 BoxShadow(
-                                  color:
-                                      const Color(0xFF00D4FF).withOpacity(0.3),
+                                  color: const Color(0xFF00D4FF)
+                                      .withOpacity(0.3),
                                   blurRadius: 12,
                                   offset: const Offset(0, 4),
                                 ),
